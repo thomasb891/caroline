@@ -27,12 +27,13 @@ const App = {
     document.querySelectorAll('.page').forEach(el => {
       el.classList.toggle('active', el.id === `page-${page}`);
     });
-    const titles = { planning: 'Planning', paiements: 'Paiements', impots: 'Impots & Frais KM', parametres: 'Parametres' };
+    const titles = { planning: 'Planning', paiements: 'Paiements', documents: 'Documents', impots: 'Impots & Frais KM', parametres: 'Parametres' };
     document.getElementById('pageTitle').textContent = titles[page] || page;
     location.hash = page;
 
     if (page === 'planning') Planning.render();
     else if (page === 'paiements') Paiements.render();
+    else if (page === 'documents') Documents.render();
     else if (page === 'impots') Impots.render();
     else if (page === 'parametres') Etablissements.render();
 
