@@ -131,14 +131,8 @@ const Impots = {
       byEtab[key].push(p);
     });
 
-    // Also include etablissements with 0 paiements
-    etablissements.forEach(e => {
-      if (!byEtab[e.nom] && e.nom !== 'RDV' && e.nom !== 'Hotel' && e.nom !== 'Stage') {
-        byEtab[e.nom] = [];
-      }
-    });
-
-    const rows = Object.keys(byEtab).sort().map(etab => {
+    // Only keep etablissements with paiements (not empty ones)
+    const rows = Object.keys(byEtab).filter(etab => byEtab[etab].length > 0).sort().map(etab => {
       const list = byEtab[etab];
       const total = list.reduce((s, p) => s + (p.montant || 0), 0);
       // Sort by date to get the last one

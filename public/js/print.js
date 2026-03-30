@@ -189,13 +189,9 @@ ${content}
       if (!byEtab[key]) byEtab[key] = [];
       byEtab[key].push(p);
     });
-    etablissements.forEach(e => {
-      if (!byEtab[e.nom] && !this.isAbsence(e.nom) && e.nom !== 'Ecole 30,6 km') byEtab[e.nom] = [];
-    });
-
     let verifRows = '';
     let totalPaie = 0;
-    Object.keys(byEtab).sort().forEach(etab => {
+    Object.keys(byEtab).filter(etab => byEtab[etab].length > 0).sort().forEach(etab => {
       const list = byEtab[etab];
       const total = list.reduce((s, p) => s + (p.montant || 0), 0);
       totalPaie += total;
