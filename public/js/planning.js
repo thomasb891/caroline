@@ -166,11 +166,79 @@ const Planning = {
           <div class="sub">Carburant : ${(totalKm / 100 * (config.consommation || 6.5) * prixMois).toFixed(2)} &euro; (${prixMois.toFixed(3)}&euro;/L)</div>
         </div>
       </div>
+      <div id="estimEtabSection" style="margin-bottom:16px;display:${workMissions.length ? 'block' : 'none'}">
+        <div id="estimEtabToggle" style="cursor:pointer;display:flex;align-items:center;gap:6px;padding:8px 0;font-size:13px;font-weight:600;color:var(--txt2)">
+          <span id="estimEtabIcon" style="display:inline-block;width:12px;transition:transform 0.2s">&#9654;</span>
+          Estimation par etablissement
+        </div>
+        <div id="estimEtabContent" style="display:none">
+          ${(() => {
+            const byEtab = {};
+            workMissions.forEach(m => {
+              const nom = m.etablissement || '?';
+              if (!byEtab[nom]) byEtab[nom] = { heures: 0, base: 0, primeNuit: 0, primeDim: 0, ifc: 0, cp: 0, total: 0, taux: 0 };
+              const e = etabMap[nom];
+              const taux = e && e.tauxHoraire ? e.tauxHoraire : 0;
+              const hDebut = parseInt((m.heureDebut || '08:00').split(':')[0]);
+              const estNuit = m.horaire === 'nuit' || (hDebut >= 21 || hDebut < 6);
+              const pNuit = (estNuit && e && e.primeNuit) ? e.primeNuit : 0;
+              const estDim = m.date ? new Date(m.date + 'T00:00:00').getDay() === 0 : false;
+              const pDim = (estDim && e && e.primeDimanche) ? e.primeDimanche : 0;
+              const ifcPct = e && e.ifc ? e.ifc : 0;
+              const cpPct = e && e.cp ? e.cp : 0;
+              const heures = m.heuresTravaillees || 0;
+              const base = heures * taux;
+              const primeN = heures * pNuit;
+              const primeD = heures * pDim;
+              const baseTotal = base + primeN + primeD;
+              const ifc = baseTotal * ifcPct / 100;
+              const cp = (baseTotal + ifc) * cpPct / 100;
+              byEtab[nom].heures += heures;
+              byEtab[nom].taux = taux;
+              byEtab[nom].base += base;
+              byEtab[nom].primeNuit += primeN;
+              byEtab[nom].primeDim += primeD;
+              byEtab[nom].ifc += ifc;
+              byEtab[nom].cp += cp;
+              byEtab[nom].total += baseTotal + ifc + cp;
+            });
+            return '<div class="table-wrap"><table style="font-size:13px"><thead><tr><th>Etablissement</th><th>Heures</th><th>Taux</th><th>Primes</th><th>IFC</th><th>CP</th><th>Total</th></tr></thead><tbody>' +
+              Object.entries(byEtab).sort((a,b) => b[1].total - a[1].total).map(([nom, d]) => {
+                const primes = d.primeNuit + d.primeDim;
+                const primesDetail = [];
+                if (d.primeNuit > 0) primesDetail.push('nuit ' + d.primeNuit.toFixed(0) + '\\u20ac');
+                if (d.primeDim > 0) primesDetail.push('dim ' + d.primeDim.toFixed(0) + '\\u20ac');
+                const primesText = primes > 0 ? primes.toFixed(2) + ' \\u20ac' : '-';
+                const primesTitle = primesDetail.length ? primesDetail.join(' + ') : '';
+                return '<tr>' +
+                  '<td style="font-weight:500"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + etabColor(nom) + ';margin-right:6px"></span>' + nom + '</td>' +
+                  '<td class="num">' + d.heures.toFixed(1) + 'h</td>' +
+                  '<td class="num">' + d.taux.toFixed(2) + ' \\u20ac/h</td>' +
+                  '<td class="num" title="' + primesTitle + '">' + primesText + '</td>' +
+                  '<td class="num">' + d.ifc.toFixed(2) + ' \\u20ac</td>' +
+                  '<td class="num">' + d.cp.toFixed(2) + ' \\u20ac</td>' +
+                  '<td class="num" style="font-weight:600">' + d.total.toFixed(2) + ' \\u20ac</td>' +
+                '</tr>';
+              }).join('') +
+            '</tbody></table></div>';
+          })()}
+        </div>
+      </div>
       <div id="notificationsBox"></div>
       <div class="calendar-grid" id="calGrid"></div>
       <div style="text-align:center;padding:20px;font-size:11px;color:var(--txt3)">&copy; Thomas</div>
     `;
     document.getElementById('btnVacances').onclick = () => this.openVacancesModal();
+    const estimToggle = document.getElementById('estimEtabToggle');
+    if (estimToggle) {
+      estimToggle.onclick = () => {
+        const content = document.getElementById('estimEtabContent');
+        const icon = document.getElementById('estimEtabIcon');
+        const visible = content.style.display !== 'none';
+        content.style.display = visible ? 'none' : 'block';
+        icon.style.transform = visible ? '' : 'rotate(90deg)';
+      };
+    }
     document.getElementById('btnExportICS').onclick = () => {
       window.open(API_BASE + '/api/export/ics?mois=' + App.getMoisKey());
     };
@@ -333,44 +401,46 @@ const Planning = {
           ${etabOptions}
         </select>
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Heure debut</label>
-          <input type="time" class="form-input" id="mDebut" value="${mission ? mission.heureDebut || '' : ''}">
+      <div id="mWorkFields">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Heure debut</label>
+            <input type="time" class="form-input" id="mDebut" value="${mission ? mission.heureDebut || '' : ''}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Heure fin</label>
+            <input type="time" class="form-input" id="mFin" value="${mission ? mission.heureFin || '' : ''}">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Pause debut</label>
+            <input type="time" class="form-input" id="mPauseD" value="${mission ? mission.pauseDebut || '' : ''}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Pause fin</label>
+            <input type="time" class="form-input" id="mPauseF" value="${mission ? mission.pauseFin || '' : ''}">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">KM (aller-retour)</label>
+            <input type="number" step="0.1" class="form-input" id="mKm" value="${mission ? mission.km || '' : ''}" placeholder="Auto">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Heures travaillees</label>
+            <div class="form-computed" id="mHeures">${mission ? (mission.heuresTravaillees || 0).toFixed(2) + 'h' : '0h'}</div>
+          </div>
         </div>
         <div class="form-group">
-          <label class="form-label">Heure fin</label>
-          <input type="time" class="form-input" id="mFin" value="${mission ? mission.heureFin || '' : ''}">
+          <label class="form-label">Type de contrat</label>
+          <select class="form-select" id="mContrat">
+            <option value="interim" ${!mission || !mission.typeContrat || mission.typeContrat === 'interim' ? 'selected' : ''}>Interim / Mission Hublo</option>
+            <option value="cdd" ${mission && mission.typeContrat === 'cdd' ? 'selected' : ''}>CDD</option>
+            <option value="cdi" ${mission && mission.typeContrat === 'cdi' ? 'selected' : ''}>CDI</option>
+            <option value="vacation" ${mission && mission.typeContrat === 'vacation' ? 'selected' : ''}>Vacation</option>
+          </select>
         </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Pause debut</label>
-          <input type="time" class="form-input" id="mPauseD" value="${mission ? mission.pauseDebut || '' : ''}">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Pause fin</label>
-          <input type="time" class="form-input" id="mPauseF" value="${mission ? mission.pauseFin || '' : ''}">
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">KM (aller-retour)</label>
-          <input type="number" step="0.1" class="form-input" id="mKm" value="${mission ? mission.km || '' : ''}" placeholder="Auto">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Heures travaillees</label>
-          <div class="form-computed" id="mHeures">${mission ? (mission.heuresTravaillees || 0).toFixed(2) + 'h' : '0h'}</div>
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Type de contrat</label>
-        <select class="form-select" id="mContrat">
-          <option value="interim" ${!mission || !mission.typeContrat || mission.typeContrat === 'interim' ? 'selected' : ''}>Interim / Mission Hublo</option>
-          <option value="cdd" ${mission && mission.typeContrat === 'cdd' ? 'selected' : ''}>CDD</option>
-          <option value="cdi" ${mission && mission.typeContrat === 'cdi' ? 'selected' : ''}>CDI</option>
-          <option value="vacation" ${mission && mission.typeContrat === 'vacation' ? 'selected' : ''}>Vacation</option>
-        </select>
       </div>
     `;
 
@@ -390,14 +460,23 @@ const Planning = {
       };
     }
 
-    // Auto-fill KM from etablissement
+    // Auto-fill KM from etablissement + toggle simplified modal for absences
     const etabSelect = document.getElementById('mEtab');
+    const workFields = document.getElementById('mWorkFields');
+    const toggleWorkFields = () => {
+      const val = etabSelect.value;
+      const isAbsenceEtab = ABSENCE_NAMES.some(a => (val || '').toLowerCase().includes(a));
+      workFields.style.display = isAbsenceEtab ? 'none' : '';
+    };
     etabSelect.addEventListener('change', () => {
       const opt = etabSelect.selectedOptions[0];
       if (opt && opt.dataset.km) {
         document.getElementById('mKm').value = opt.dataset.km;
       }
+      toggleWorkFields();
     });
+    // Apply on load if editing an existing absence mission
+    toggleWorkFields();
 
     // Auto-compute hours
     const computeHours = () => {
@@ -420,21 +499,25 @@ const Planning = {
       const etab = document.getElementById('mEtab').value;
       if (!etab) return App.toast('Choisir un etablissement', 'error');
 
-      const debut = document.getElementById('mDebut').value;
-      const fin = document.getElementById('mFin').value;
-      const pauseD = document.getElementById('mPauseD').value;
-      const pauseF = document.getElementById('mPauseF').value;
-      const km = parseFloat(document.getElementById('mKm').value) || 0;
+      const isAbsenceEtab = ABSENCE_NAMES.some(a => (etab || '').toLowerCase().includes(a));
+
+      const debut = isAbsenceEtab ? '' : document.getElementById('mDebut').value;
+      const fin = isAbsenceEtab ? '' : document.getElementById('mFin').value;
+      const pauseD = isAbsenceEtab ? '' : document.getElementById('mPauseD').value;
+      const pauseF = isAbsenceEtab ? '' : document.getElementById('mPauseF').value;
+      const km = isAbsenceEtab ? 0 : (parseFloat(document.getElementById('mKm').value) || 0);
 
       let heures = 0;
-      const dVal = App.parseTime(debut);
-      const fVal = App.parseTime(fin);
-      if (dVal !== null && fVal !== null) {
-        heures = fVal - dVal;
-        const pdVal = App.parseTime(pauseD);
-        const pfVal = App.parseTime(pauseF);
-        if (pdVal !== null && pfVal !== null) heures -= (pfVal - pdVal);
-        heures = Math.max(0, heures);
+      if (!isAbsenceEtab) {
+        const dVal = App.parseTime(debut);
+        const fVal = App.parseTime(fin);
+        if (dVal !== null && fVal !== null) {
+          heures = fVal - dVal;
+          const pdVal = App.parseTime(pauseD);
+          const pfVal = App.parseTime(pauseF);
+          if (pdVal !== null && pfVal !== null) heures -= (pfVal - pdVal);
+          heures = Math.max(0, heures);
+        }
       }
 
       const baseData = {
@@ -442,8 +525,8 @@ const Planning = {
         heureDebut: debut, heureFin: fin,
         pauseDebut: pauseD, pauseFin: pauseF,
         km, heuresTravaillees: +heures.toFixed(4),
-        typeContrat: document.getElementById('mContrat').value,
-        horaire: (() => {
+        typeContrat: isAbsenceEtab ? '' : document.getElementById('mContrat').value,
+        horaire: isAbsenceEtab ? '' : (() => {
           const h = parseInt((debut || '00:00').split(':')[0]);
           return (h >= 21 || h < 6) ? 'nuit' : 'jour';
         })()

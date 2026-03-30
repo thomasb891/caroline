@@ -384,37 +384,23 @@ const Documents = {
       <div style="font-size:14px;font-weight:600;margin-bottom:4px">${etabNom}</div>
       <div style="font-size:12px;color:var(--txt2);margin-bottom:16px">${moisLabel}</div>
       <div style="display:flex;flex-direction:column;gap:10px">
-        <label class="form-check"><input type="checkbox" id="dFichePaye" ${doc.fichePaye ? 'checked' : ''}> Fiche de paie</label>
-        <label class="form-check"><input type="checkbox" id="dContrat" ${doc.contrat ? 'checked' : ''}> Contrat de travail</label>
-        <label class="form-check"><input type="checkbox" id="dFinContrat" ${doc.finContrat ? 'checked' : ''}> Certificat de fin de contrat</label>
-        <label class="form-check"><input type="checkbox" id="dAttestation" ${doc.attestation ? 'checked' : ''}> Attestation employeur</label>
-        <label class="form-check"><input type="checkbox" id="dSolde" ${doc.solde ? 'checked' : ''}> Solde de tout compte</label>
+        <label class="form-check"><input type="checkbox" id="dFichePaye" ${doc.fichePaye ? 'checked' : ''} disabled> Fiche de paie</label>
+        <label class="form-check"><input type="checkbox" id="dContrat" ${doc.contrat ? 'checked' : ''} disabled> Contrat de travail</label>
+        <label class="form-check"><input type="checkbox" id="dFinContrat" ${doc.finContrat ? 'checked' : ''} disabled> Certificat de fin de contrat</label>
+        <label class="form-check"><input type="checkbox" id="dAttestation" ${doc.attestation ? 'checked' : ''} disabled> Attestation employeur</label>
+        <label class="form-check"><input type="checkbox" id="dSolde" ${doc.solde ? 'checked' : ''} disabled> Solde de tout compte</label>
       </div>
-      <div class="form-group" style="margin-top:16px">
+      <div style="margin-top:12px;padding:8px 12px;background:rgba(255,193,7,0.1);border-radius:6px;font-size:12px;color:var(--txt2)">
+        Les documents se mettent a jour via le bouton <strong>Nouveau document</strong>.
+      </div>
+      ${doc.notes ? `<div class="form-group" style="margin-top:16px">
         <label class="form-label">Notes</label>
-        <textarea class="form-input" id="dNotes" rows="2" style="resize:vertical" placeholder="Ex: Relancer par email...">${doc.notes || ''}</textarea>
-      </div>
+        <div style="font-size:13px;color:var(--txt2);padding:8px;background:rgba(0,0,0,0.1);border-radius:6px">${doc.notes}</div>
+      </div>` : ''}
     `;
     const footer = `
-      <button class="btn btn-secondary" onclick="App.closeModal()">Annuler</button>
-      <button class="btn btn-primary" id="dSave">Sauvegarder</button>
+      <button class="btn btn-secondary" onclick="App.closeModal()">Fermer</button>
     `;
     App.openModal('Documents', body, footer);
-
-    document.getElementById('dSave').onclick = async () => {
-      await API.documents.save({
-        mois,
-        etablissement: etabNom,
-        fichePaye: document.getElementById('dFichePaye').checked,
-        contrat: document.getElementById('dContrat').checked,
-        finContrat: document.getElementById('dFinContrat').checked,
-        attestation: document.getElementById('dAttestation').checked,
-        solde: document.getElementById('dSolde').checked,
-        notes: document.getElementById('dNotes').value.trim()
-      });
-      App.closeModal();
-      App.toast('Documents mis a jour');
-      this.render();
-    };
   }
 };

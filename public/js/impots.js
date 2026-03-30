@@ -5,10 +5,11 @@ const Impots = {
     const annee = this.currentYear.toString();
     const yearDisplay = document.getElementById('yearDisplayI');
     if (yearDisplay) yearDisplay.textContent = annee;
-    const [stats, paiements, etablissements] = await Promise.all([
+    const [stats, paiements, etablissements, allMissions] = await Promise.all([
       API.stats.annuel(annee),
       API.paiements.listAnnee(annee),
-      API.etablissements.list()
+      API.etablissements.list(),
+      API.missions.listAnnee(annee)
     ]);
     const moisNoms = ['Janvier', 'Fevrier', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Aout', 'Septembre', 'Octobre', 'Novembre', 'Decembre'];
 
@@ -49,11 +50,43 @@ const Impots = {
       </tr>${detailRows}`;
     }).join('');
 
-    // KM table rows
+    // Group missions by mois+etablissement for KM detail
+    const missionsByMois = {};
+    (allMissions || []).forEach(m => {
+      if (!m.date) return;
+      const mk = m.date.slice(0, 7);
+      if (!missionsByMois[mk]) missionsByMois[mk] = [];
+      missionsByMois[mk].push(m);
+    });
+
+    // KM table rows (cliquable pour detail)
     const kmRows = moisNoms.map((nom, i) => {
       const key = `${annee}-${String(i + 1).padStart(2, '0')}`;
       const d = stats.moisData[key] || { km: 0, nbMissions: 0 };
-      return `<tr><td>${nom}</td><td class="num">${d.nbMissions}</td><td class="num">${d.km.toFixed(0)} km</td></tr>`;
+      const moisMissions = missionsByMois[key] || [];
+      const hasData = moisMissions.length > 0;
+
+      // Detail rows by etablissement
+      const byEtab = {};
+      moisMissions.forEach(m => {
+        const e = m.etablissement || 'Autre';
+        if (!byEtab[e]) byEtab[e] = { km: 0, nb: 0 };
+        byEtab[e].km += (m.km || 0);
+        byEtab[e].nb += 1;
+      });
+      const detailRows = Object.entries(byEtab).sort((a, b) => b[1].km - a[1].km).map(([etab, data]) =>
+        `<tr class="km-detail" data-mois="${key}" style="display:none">
+          <td style="padding-left:24px;font-size:11px;color:var(--txt2)">${etab}</td>
+          <td class="num" style="font-size:11px">${data.nb}</td>
+          <td class="num" style="font-size:11px">${data.km.toFixed(0)} km</td>
+        </tr>`
+      ).join('');
+
+      return `<tr class="km-mois" data-toggle="${key}" style="cursor:${hasData ? 'pointer' : 'default'}">
+        <td style="font-weight:${hasData ? '600' : '400'}">${hasData ? '<span class="km-icon" style="display:inline-block;width:12px;transition:transform 0.2s">&#9654;</span> ' : ''}${nom}</td>
+        <td class="num" style="font-weight:${d.nbMissions > 0 ? '600' : '400'}">${d.nbMissions}</td>
+        <td class="num" style="font-weight:${d.km > 0 ? '600' : '400'}">${d.km > 0 ? d.km.toFixed(0) + ' km' : '-'}</td>
+      </tr>${detailRows}`;
     }).join('');
 
     const baremeKm = stats.config.baremeKm;
@@ -176,6 +209,19 @@ const Impots = {
         const visible = details[0].style.display !== 'none';
         details.forEach(d => d.style.display = visible ? 'none' : 'table-row');
         const icon = row.querySelector('.rev-icon');
+        if (icon) icon.style.transform = visible ? '' : 'rotate(90deg)';
+      };
+    });
+    // Toggle KM detail rows on click
+    page.querySelectorAll('.km-mois').forEach(row => {
+      row.onclick = () => {
+        const key = row.dataset.toggle;
+        if (!key) return;
+        const details = page.querySelectorAll(`.km-detail[data-mois="${key}"]`);
+        if (!details.length) return;
+        const visible = details[0].style.display !== 'none';
+        details.forEach(d => d.style.display = visible ? 'none' : 'table-row');
+        const icon = row.querySelector('.km-icon');
         if (icon) icon.style.transform = visible ? '' : 'rotate(90deg)';
       };
     });

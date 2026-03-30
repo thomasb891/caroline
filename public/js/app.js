@@ -45,23 +45,33 @@ const App = {
     if (page === 'planning') {
       actions.innerHTML = `<div class="month-selector">
         <button class="btn-icon" id="prevMonth"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
-        <span class="month-display" id="monthDisplay"></span>
+        <span class="month-display clickable" id="monthDisplay"></span>
         <button class="btn-icon" id="nextMonth"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>
       </div>`;
       document.getElementById('prevMonth').onclick = () => { this.currentDate.setMonth(this.currentDate.getMonth() - 1); Planning.render(); };
       document.getElementById('nextMonth').onclick = () => { this.currentDate.setMonth(this.currentDate.getMonth() + 1); Planning.render(); };
+      document.getElementById('monthDisplay').onclick = (e) => {
+        e.stopPropagation();
+        this.openMonthPicker(e.target, { mode: 'month', onSelect: (y, m) => { this.currentDate.setFullYear(y); this.currentDate.setMonth(m); Planning.render(); } });
+      };
     } else if (page === 'paiements') {
       actions.innerHTML = `<div class="month-selector">
         <button class="btn-icon" id="prevYearP"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
-        <span class="month-display" id="monthDisplayP"></span>
+        <span class="month-display clickable" id="monthDisplayP"></span>
         <button class="btn-icon" id="nextYearP"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>
       </div>`;
       document.getElementById('prevYearP').onclick = () => { Paiements.currentYear--; Paiements.render(); };
       document.getElementById('nextYearP').onclick = () => { Paiements.currentYear++; Paiements.render(); };
+      document.getElementById('monthDisplayP').onclick = (e) => {
+        e.stopPropagation();
+        const cb = (year) => { Paiements.currentYear = year; Paiements.render(); };
+        cb._currentYear = Paiements.currentYear;
+        this.openMonthPicker(e.target, { mode: 'year', onSelect: cb });
+      };
     } else if (page === 'statistiques') {
       actions.innerHTML = `<div class="month-selector">
         <button class="btn-icon" id="prevS"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
-        <span class="month-display" id="yearDisplayS"></span>
+        <span class="month-display clickable" id="yearDisplayS"></span>
         <button class="btn-icon" id="nextS"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>
       </div>`;
       document.getElementById('prevS').onclick = () => {
@@ -74,18 +84,34 @@ const App = {
         else Stats.currentYear++;
         Stats.render();
       };
+      document.getElementById('yearDisplayS').onclick = (e) => {
+        e.stopPropagation();
+        if (Stats.viewMode === 'month') {
+          this.openMonthPicker(e.target, { mode: 'month', onSelect: (y, m) => { this.currentDate.setFullYear(y); this.currentDate.setMonth(m); Stats.render(); } });
+        } else {
+          const cb = (year) => { Stats.currentYear = year; Stats.render(); };
+          cb._currentYear = Stats.currentYear;
+          this.openMonthPicker(e.target, { mode: 'year', onSelect: cb });
+        }
+      };
     } else if (page === 'impots') {
       actions.innerHTML = `<div class="month-selector">
         <button class="btn-icon" id="prevYearI"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
-        <span class="month-display" id="yearDisplayI"></span>
+        <span class="month-display clickable" id="yearDisplayI"></span>
         <button class="btn-icon" id="nextYearI"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>
       </div>`;
       document.getElementById('prevYearI').onclick = () => { Impots.currentYear--; Impots.render(); };
       document.getElementById('nextYearI').onclick = () => { Impots.currentYear++; Impots.render(); };
+      document.getElementById('yearDisplayI').onclick = (e) => {
+        e.stopPropagation();
+        const cb = (year) => { Impots.currentYear = year; Impots.render(); };
+        cb._currentYear = Impots.currentYear;
+        this.openMonthPicker(e.target, { mode: 'year', onSelect: cb });
+      };
     } else if (page === 'documents') {
       actions.innerHTML = `<div class="month-selector">
         <button class="btn-icon" id="prevMonthD"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
-        <span class="month-display" id="monthDisplayD"></span>
+        <span class="month-display clickable" id="monthDisplayD"></span>
         <button class="btn-icon" id="nextMonthD"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>
       </div>`;
       document.getElementById('prevMonthD').onclick = () => {
@@ -97,6 +123,16 @@ const App = {
         if (Documents.viewMode === 'year') { Documents.currentYear++; }
         else { this.currentDate.setMonth(this.currentDate.getMonth() + 1); }
         Documents.render();
+      };
+      document.getElementById('monthDisplayD').onclick = (e) => {
+        e.stopPropagation();
+        if (Documents.viewMode === 'year') {
+          const cb = (year) => { Documents.currentYear = year; Documents.render(); };
+          cb._currentYear = Documents.currentYear;
+          this.openMonthPicker(e.target, { mode: 'year', onSelect: cb });
+        } else {
+          this.openMonthPicker(e.target, { mode: 'month', onSelect: (y, m) => { this.currentDate.setFullYear(y); this.currentDate.setMonth(m); Documents.render(); } });
+        }
       };
     } else {
       actions.innerHTML = '';
@@ -163,6 +199,106 @@ const App = {
     if (!str) return null;
     const [h, m] = str.split(':').map(Number);
     return h + m / 60;
+  },
+
+  // --- Month Picker Popup ---
+  _monthPickerOpen: false,
+
+  openMonthPicker(targetEl, { mode, onSelect }) {
+    // mode: 'month' (month+year) or 'year' (year only)
+    this.closeMonthPicker();
+    const rect = targetEl.getBoundingClientRect();
+    const popup = document.createElement('div');
+    popup.id = 'monthPickerPopup';
+    popup.style.cssText = `position:fixed;top:${rect.bottom + 4}px;left:${rect.left}px;z-index:9999;background:#1e293b;border:1px solid rgba(148,163,184,0.2);border-radius:10px;padding:12px;box-shadow:0 8px 32px rgba(0,0,0,0.5);min-width:220px;`;
+
+    let pickerYear = this.currentDate.getFullYear();
+    if (mode === 'year') {
+      // For year-only pages (paiements, impots) use a different source
+      pickerYear = (typeof onSelect._currentYear === 'number') ? onSelect._currentYear : pickerYear;
+    }
+
+    const renderContent = () => {
+      if (mode === 'year') {
+        const years = [];
+        for (let y = 2024; y <= 2027; y++) years.push(y);
+        popup.innerHTML = `
+          <div style="font-size:12px;font-weight:600;color:#94a3b8;text-align:center;margin-bottom:8px">Annee</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+            ${years.map(y => `<button class="mp-btn${y === pickerYear ? ' mp-active' : ''}" data-year="${y}">${y}</button>`).join('')}
+          </div>
+        `;
+        popup.querySelectorAll('[data-year]').forEach(btn => {
+          btn.onclick = () => {
+            onSelect(parseInt(btn.dataset.year));
+            this.closeMonthPicker();
+          };
+        });
+      } else {
+        const moisNoms = ['Jan', 'Fev', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aou', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const curMonth = this.currentDate.getMonth();
+        const curYear = this.currentDate.getFullYear();
+        popup.innerHTML = `
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <button class="mp-arrow" id="mpPrevYear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="15 18 9 12 15 6"/></svg></button>
+            <span style="font-size:14px;font-weight:600;color:#f1f5f9" id="mpYearLabel">${pickerYear}</span>
+            <button class="mp-arrow" id="mpNextYear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="9 18 15 12 9 6"/></svg></button>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
+            ${moisNoms.map((m, i) => `<button class="mp-btn${(i === curMonth && pickerYear === curYear) ? ' mp-active' : ''}" data-month="${i}">${m}</button>`).join('')}
+          </div>
+        `;
+        popup.querySelector('#mpPrevYear').onclick = () => { pickerYear--; renderContent(); };
+        popup.querySelector('#mpNextYear').onclick = () => { pickerYear++; renderContent(); };
+        popup.querySelectorAll('[data-month]').forEach(btn => {
+          btn.onclick = () => {
+            onSelect(pickerYear, parseInt(btn.dataset.month));
+            this.closeMonthPicker();
+          };
+        });
+      }
+    };
+
+    renderContent();
+    document.body.appendChild(popup);
+    this._monthPickerOpen = true;
+
+    // Add styles for picker buttons if not present
+    if (!document.getElementById('mpStyles')) {
+      const style = document.createElement('style');
+      style.id = 'mpStyles';
+      style.textContent = `
+        .mp-btn{background:rgba(255,255,255,0.06);border:1px solid rgba(148,163,184,0.12);color:#f1f5f9;border-radius:6px;padding:7px 4px;font-size:13px;cursor:pointer;transition:all .15s}
+        .mp-btn:hover{background:rgba(99,102,241,0.2);border-color:rgba(99,102,241,0.4)}
+        .mp-btn.mp-active{background:#6366f1;border-color:#6366f1;color:#fff;font-weight:600}
+        .mp-arrow{background:none;border:none;color:#94a3b8;cursor:pointer;padding:4px;border-radius:4px;display:flex;align-items:center}
+        .mp-arrow:hover{background:rgba(255,255,255,0.08);color:#f1f5f9}
+        .month-display.clickable{cursor:pointer;padding:2px 8px;border-radius:6px;transition:background .15s}
+        .month-display.clickable:hover{background:rgba(255,255,255,0.08)}
+      `;
+      document.head.appendChild(style);
+    }
+
+    // Close on outside click
+    setTimeout(() => {
+      const handler = (e) => {
+        if (!popup.contains(e.target) && e.target !== targetEl) {
+          this.closeMonthPicker();
+          document.removeEventListener('click', handler);
+        }
+      };
+      document.addEventListener('click', handler);
+      popup._outsideHandler = handler;
+    }, 0);
+  },
+
+  closeMonthPicker() {
+    const existing = document.getElementById('monthPickerPopup');
+    if (existing) {
+      if (existing._outsideHandler) document.removeEventListener('click', existing._outsideHandler);
+      existing.remove();
+    }
+    this._monthPickerOpen = false;
   }
 };
 
