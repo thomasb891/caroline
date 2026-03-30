@@ -278,17 +278,15 @@ const Documents = {
         </div>
       </div>
       <div class="form-group">
-        <label class="form-label">Type de document</label>
-        <select class="form-select" id="ulTypeDoc">
-          <option value="">Choisir...</option>
-          <option value="fichePaye">Fiche de paie</option>
-          <option value="contrat">Contrat de travail</option>
-          <option value="finContrat">Certificat de fin de contrat</option>
-          <option value="attestation">Attestation employeur</option>
-          <option value="solde">Solde de tout compte</option>
-          <option value="polEmploi">Document Pole Emploi</option>
-          <option value="autre">Autre document</option>
-        </select>
+        <label class="form-label">Type de document (choix multiple)</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <label class="form-check"><input type="checkbox" name="ulType" value="fichePaye"> Fiche de paie</label>
+          <label class="form-check"><input type="checkbox" name="ulType" value="contrat"> Contrat de travail</label>
+          <label class="form-check"><input type="checkbox" name="ulType" value="finContrat"> Fin de contrat</label>
+          <label class="form-check"><input type="checkbox" name="ulType" value="attestation"> Attestation employeur</label>
+          <label class="form-check"><input type="checkbox" name="ulType" value="solde"> Solde de tout compte</label>
+          <label class="form-check"><input type="checkbox" name="ulType" value="polEmploi"> Document Pole Emploi</label>
+        </div>
       </div>
       <div class="form-group">
         <label class="form-label">Recu comment ?</label>
@@ -330,19 +328,19 @@ const Documents = {
       const etab = document.getElementById('ulEtab').value;
       const annee = document.getElementById('ulAnnee').value;
       const mois = document.getElementById('ulMois').value;
-      const typeDoc = document.getElementById('ulTypeDoc').value;
+      const types = [...document.querySelectorAll('input[name="ulType"]:checked')].map(c => c.value);
       const support = document.querySelector('input[name="ulSupport"]:checked').value;
       const file = document.getElementById('ulFile').files[0];
 
       if (!etab) return App.toast('Choisir un etablissement', 'error');
-      if (!typeDoc) return App.toast('Choisir le type de document', 'error');
+      if (!types.length) return App.toast('Cocher au moins un type de document', 'error');
       if (support === 'numerique' && !file) return App.toast('Choisir un fichier', 'error');
 
       const formData = new FormData();
       formData.append('etablissement', etab);
       formData.append('annee', annee);
       formData.append('mois', mois);
-      formData.append('typeDoc', typeDoc);
+      formData.append('typeDoc', types.join(','));
       formData.append('support', support);
       if (file) formData.append('file', file);
 
@@ -357,10 +355,11 @@ const Documents = {
         document.getElementById('ulProgressBar').style.width = '100%';
 
         if (result.ok) {
-          const typeLabels = { fichePaye:'Fiche de paie', contrat:'Contrat', finContrat:'Fin de contrat', attestation:'Attestation', solde:'Solde', polEmploi:'Pole Emploi', autre:'Autre' };
+          const typeLabels = { fichePaye:'Fiche de paie', contrat:'Contrat', finContrat:'Fin de contrat', attestation:'Attestation', solde:'Solde', polEmploi:'Pole Emploi' };
+          const typeNames = types.map(t => typeLabels[t] || t).join(', ');
           const msg = support === 'papier'
-            ? `${typeLabels[typeDoc]} (papier) enregistre pour ${etab}`
-            : `${typeLabels[typeDoc]} envoye sur le reseau pour ${etab}`;
+            ? `${typeNames} (papier) enregistre pour ${etab}`
+            : `${typeNames} envoye sur le reseau pour ${etab}`;
           document.getElementById('ulProgressText').textContent = 'Termine !';
           document.getElementById('ulSuccess').textContent = msg;
           document.getElementById('ulSuccess').style.display = 'block';

@@ -315,37 +315,53 @@ app.post('/api/documents/upload', upload.single('file'), (req, res) => {
     polEmploi: 'Document_Pole_Emploi',
     autre: 'Autre'
   };
-  const typeLabel = typeLabels[typeDoc] || typeDoc;
   const moisNoms = ['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
   const moisLabel = moisNoms[parseInt(mois) - 1] || mois;
-
-  // Target directory
   const cleanEtab = etablissement.replace(/[<>:"/\\|?*]/g, '_').replace(/\s+/g, '_');
-  const destDir = path.join('\\\\MYCLOUD-1KSKLK', 'Serveur', 'Caro Hublo', 'Documents', cleanEtab, annee, moisLabel);
+  const types = typeDoc.split(',').filter(Boolean);
+
+  // NAS path
+  const nasBase = path.join('\\\\MYCLOUD-1KSKLK', 'Serveur', 'Caro Hublo', 'Documents', cleanEtab, annee, moisLabel);
+
+  // Check if NAS is accessible before creating dirs
+  let nasOk = false;
+  try {
+    const nasRoot = '\\\\MYCLOUD-1KSKLK\\Serveur\\Caro Hublo\\Documents';
+    fs.accessSync(nasRoot, fs.constants.W_OK);
+    nasOk = true;
+  } catch (e) {
+    nasOk = false;
+  }
 
   let savedPath = null;
   if (req.file && support !== 'papier') {
-    // Create directory
-    try { fs.mkdirSync(destDir, { recursive: true }); } catch (e) {}
+    if (nasOk) {
+      try { fs.mkdirSync(nasBase, { recursive: true }); } catch (e) {}
 
-    // Find next number (01, 02, ...) for this type
-    let num = 1;
-    try {
-      const existing = fs.readdirSync(destDir).filter(f => f.startsWith(typeLabel));
-      num = existing.length + 1;
-    } catch (e) {}
+      // Build filename from all types
+      const allTypeLabels = types.map(t => typeLabels[t] || t).join('_');
 
-    const ext = path.extname(req.file.originalname).toLowerCase();
-    const newName = `${typeLabel}_${cleanEtab}_${moisLabel}_${annee}_${String(num).padStart(2, '0')}${ext}`;
-    const destPath = path.join(destDir, newName);
+      // Find next number
+      let num = 1;
+      try {
+        const existing = fs.readdirSync(nasBase);
+        num = existing.length + 1;
+      } catch (e) {}
 
-    // Move file
-    try {
-      fs.copyFileSync(req.file.path, destPath);
-      fs.unlinkSync(req.file.path);
-      savedPath = destPath;
-    } catch (e) {
-      savedPath = req.file.path; // keep in uploads if NAS not accessible
+      const ext = path.extname(req.file.originalname).toLowerCase();
+      const newName = `${allTypeLabels}_${cleanEtab}_${moisLabel}_${annee}_${String(num).padStart(2, '0')}${ext}`;
+      const destPath = path.join(nasBase, newName);
+
+      try {
+        fs.copyFileSync(req.file.path, destPath);
+        fs.unlinkSync(req.file.path);
+        savedPath = destPath;
+      } catch (e) {
+        savedPath = req.file.path;
+      }
+    } else {
+      // NAS not accessible, keep in uploads
+      savedPath = req.file.path;
     }
   }
 
@@ -357,26 +373,27 @@ app.post('/api/documents/upload', upload.single('file'), (req, res) => {
     doc = { id: uid(), mois: moisKey, etablissement };
     docs.push(doc);
   }
-  // Set the document type as received
-  if (typeDoc === 'fichePaye') doc.fichePaye = true;
-  if (typeDoc === 'contrat') doc.contrat = true;
-  if (typeDoc === 'finContrat') doc.finContrat = true;
-  if (typeDoc === 'attestation') doc.attestation = true;
-  if (typeDoc === 'solde') doc.solde = true;
+  // Set all types as received
+  types.forEach(t => {
+    if (t === 'fichePaye') doc.fichePaye = true;
+    if (t === 'contrat') doc.contrat = true;
+    if (t === 'finContrat') doc.finContrat = true;
+    if (t === 'attestation') doc.attestation = true;
+    if (t === 'solde') doc.solde = true;
+  });
 
-  // Track support (papier/numerique)
   if (!doc.details) doc.details = [];
   doc.details.push({
-    type: typeDoc,
-    typeLabel,
+    types,
     support: support || 'numerique',
     date: new Date().toISOString(),
     fichier: savedPath ? path.basename(savedPath) : null,
-    chemin: savedPath
+    chemin: savedPath,
+    nasOk
   });
 
   writeJSON('documents.json', docs);
-  res.json({ ok: true, path: savedPath, filename: savedPath ? path.basename(savedPath) : null });
+  res.json({ ok: true, path: savedPath, filename: savedPath ? path.basename(savedPath) : null, nasOk });
 });
 
 // --- Comparaison Impots ---
