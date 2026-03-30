@@ -2,10 +2,40 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
+const { createProxyMiddleware } = require('http-proxy-middleware');
+const { spawn } = require('child_process');
 const app = express();
 const PORT = 3050;
+const POTAGER_PORT = 8282;
 
 app.use(express.json());
+
+// Page d'accueil
+const accueilPath = path.join(__dirname, '..', 'index.html');
+if (fs.existsSync(accueilPath)) {
+  app.get('/accueil', (req, res) => res.sendFile(accueilPath));
+}
+
+// Proxy potager -> port interne 8282
+const potagerDir = path.join(__dirname, '..', 'potager');
+if (fs.existsSync(potagerDir)) {
+  const potager = spawn(process.execPath, ['server.js'], {
+    cwd: potagerDir,
+    stdio: 'pipe',
+    env: { ...process.env, PORT: POTAGER_PORT.toString(), HOST: '127.0.0.1' }
+  });
+  potager.stdout.on('data', d => console.log('[Potager]', d.toString().trim()));
+  potager.stderr.on('data', d => console.error('[Potager]', d.toString().trim()));
+  process.on('exit', () => { try { potager.kill(); } catch {} });
+
+  app.use('/potager', createProxyMiddleware({
+    target: `http://127.0.0.1:${POTAGER_PORT}`,
+    changeOrigin: true,
+    pathRewrite: { '^/potager': '' },
+    ws: true
+  }));
+}
+
 app.use(express.static(path.join(__dirname, 'public')));
 module.exports = app;
 

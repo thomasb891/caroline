@@ -261,8 +261,8 @@ const Etablissements = {
     document.getElementById('eNom').addEventListener('input', updateFields);
     updateFields();
 
-    // Auto-search address when typing establishment name
-    this.setupAddressSearch('eNom', 'eNomSuggestions', (place) => {
+    // Auto-search establishment by name (Nominatim for places/buildings)
+    this.setupPlaceSearch('eNom', 'eNomSuggestions', (place) => {
       document.getElementById('eAdresse').value = place.display_name;
       document.getElementById('eLat').value = place.lat;
       document.getElementById('eLon').value = place.lon;
@@ -361,6 +361,39 @@ const Etablissements = {
     App.closeModal();
     App.toast(isEdit ? 'Etablissement modifie' : 'Etablissement ajoute');
     this.render();
+  },
+
+  setupPlaceSearch(inputId, suggestionsId, onSelect) {
+    const input = document.getElementById(inputId);
+    const container = document.getElementById(suggestionsId);
+
+    input.addEventListener('input', () => {
+      clearTimeout(this.searchTimeout);
+      const q = input.value.trim();
+      if (q.length < 4) { container.innerHTML = ''; return; }
+
+      this.searchTimeout = setTimeout(async () => {
+        try {
+          // Nominatim for places/buildings (EHPAD, residences, cliniques...)
+          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=fr&limit=5&addressdetails=1`, {
+            headers: { 'Accept-Language': 'fr' }
+          });
+          const results = await res.json();
+          if (!results.length) { container.innerHTML = '<div style="padding:8px;font-size:12px;color:var(--txt3)">Aucun resultat</div>'; return; }
+          container.innerHTML = results.map(r => `
+            <div class="suggestion-item" data-lat="${r.lat}" data-lon="${r.lon}" data-name="${r.display_name.replace(/"/g, '&quot;')}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;flex-shrink:0;color:var(--txt3)"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              <span>${r.display_name}</span>
+            </div>
+          `).join('');
+          container.querySelectorAll('.suggestion-item').forEach(item => {
+            item.onclick = () => onSelect({ display_name: item.dataset.name, lat: item.dataset.lat, lon: item.dataset.lon });
+          });
+        } catch (e) {
+          container.innerHTML = '<div style="padding:8px;font-size:12px;color:var(--red)">Erreur de recherche</div>';
+        }
+      }, 600);
+    });
   },
 
   setupAddressSearch(inputId, suggestionsId, onSelect) {
