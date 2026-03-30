@@ -547,23 +547,36 @@ async function updatePrixGasoil() {
     const stationsRaw = data.results
       .filter(s => s.gazole_maj && s.gazole_maj > sevenDaysAgo);
 
-    // Recuperer les noms des stations depuis prix-carburants.gouv.fr
-    const stations = [];
-    for (const s of stationsRaw.slice(0, 10)) {
-      let nom = '';
-      try {
-        const html = await new Promise((resolve, reject) => {
-          const req = https.get(`https://www.prix-carburants.gouv.fr/map/recuperer_infos_pdv/${s.id}`, { headers: { 'User-Agent': 'HubloGestion/1.0' } }, res => {
-            let d = ''; res.on('data', c => d += c); res.on('end', () => resolve(d));
+    const stations = stationsRaw.slice(0, 10).map(s => ({
+      id: s.id, prix: s.gazole_prix, adresse: s.adresse, ville: s.ville, maj: s.gazole_maj, nom: ''
+    }));
+
+    // Recuperer les noms seulement si pas deja en cache ou 1x par jour
+    const nomsCache = readJSON('stations-noms.json') || {};
+    const now24h = Date.now() - 24 * 60 * 60 * 1000;
+    let nomsUpdated = false;
+    for (const s of stations) {
+      if (nomsCache[s.id] && nomsCache[s.id].ts > now24h) {
+        s.nom = nomsCache[s.id].nom;
+      } else {
+        try {
+          const html = await new Promise((resolve, reject) => {
+            const req = https.get(`https://www.prix-carburants.gouv.fr/map/recuperer_infos_pdv/${s.id}`, { headers: { 'User-Agent': 'HubloGestion/1.0' } }, res => {
+              let d = ''; res.on('data', c => d += c); res.on('end', () => resolve(d));
+            });
+            req.on('error', reject);
+            setTimeout(() => req.destroy(), 3000);
           });
-          req.on('error', reject);
-          setTimeout(() => req.destroy(), 3000);
-        });
-        const match = html.match(/<strong>([^<]+)<\/strong>/);
-        if (match) nom = match[1].trim();
-      } catch(e) {}
-      stations.push({ prix: s.gazole_prix, adresse: s.adresse, ville: s.ville, maj: s.gazole_maj, nom });
+          const match = html.match(/<strong>([^<]+)<\/strong>/);
+          if (match) {
+            s.nom = match[1].trim();
+            nomsCache[s.id] = { nom: s.nom, ts: Date.now() };
+            nomsUpdated = true;
+          }
+        } catch(e) {}
+      }
     }
+    if (nomsUpdated) writeJSON('stations-noms.json', nomsCache);
 
     // Aussi grouper par zone (ville) pour conseiller selon le trajet
     const zones = {};
@@ -723,6 +736,6 @@ if (require.main === module) {
     scheduleBackup();
     doBackup();
     updatePrixGasoil();
-    setInterval(updatePrixGasoil, 6 * 60 * 60 * 1000); // MAJ prix toutes les 6h
+    setInterval(updatePrixGasoil, 10 * 60 * 1000); // MAJ prix toutes les 10 min
   });
 }
