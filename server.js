@@ -148,19 +148,25 @@ app.get('/api/stats/annuel', (req, res) => {
     const key = `${annee}-${String(m + 1).padStart(2, '0')}`;
     const moisMissions = missions.filter(mi => mi.date && mi.date.startsWith(key));
     const moisPaiements = paiements.filter(p => p.dateVersement && p.dateVersement.startsWith(key));
+    const pSalaires = moisPaiements.filter(p => !p.etablissement || !p.etablissement.toLowerCase().includes('emploi'));
+    const pPoleEmploi = moisPaiements.filter(p => p.etablissement && p.etablissement.toLowerCase().includes('emploi'));
     moisData[key] = {
       heures: moisMissions.reduce((s, mi) => s + (mi.heuresTravaillees || 0), 0),
       km: moisMissions.reduce((s, mi) => s + (mi.km || 0), 0),
       revenus: moisPaiements.reduce((s, p) => s + (p.montant || 0), 0),
+      salaires: pSalaires.reduce((s, p) => s + (p.montant || 0), 0),
+      poleEmploi: pPoleEmploi.reduce((s, p) => s + (p.montant || 0), 0),
       nbMissions: moisMissions.length,
       nbPaiements: moisPaiements.length
     };
   }
   const totalKm = Object.values(moisData).reduce((s, d) => s + d.km, 0);
   const totalRevenus = Object.values(moisData).reduce((s, d) => s + d.revenus, 0);
+  const totalSalaires = Object.values(moisData).reduce((s, d) => s + d.salaires, 0);
+  const totalPoleEmploi = Object.values(moisData).reduce((s, d) => s + d.poleEmploi, 0);
   const fraisKm = +(totalKm * config.baremeKm).toFixed(2);
 
-  res.json({ annee, moisData, totalKm, totalRevenus, fraisKm, config });
+  res.json({ annee, moisData, totalKm, totalRevenus, totalSalaires, totalPoleEmploi, fraisKm, config });
 });
 
 app.listen(PORT, () => console.log(`Hublo Gestion running on http://localhost:${PORT}`));

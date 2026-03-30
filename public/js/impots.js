@@ -88,10 +88,17 @@ const Impots = {
             <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:rgba(0,0,0,0.2);border-radius:8px;border-left:4px solid var(--green)">
               <div>
                 <div style="font-size:16px;font-weight:700">Case 1AJ</div>
-                <div style="font-size:11px;color:var(--txt2)">Salaires nets imposables</div>
+                <div style="font-size:11px;color:var(--txt2)">Salaires nets imposables (missions)</div>
               </div>
-              <div style="font-size:24px;font-weight:700;color:var(--green)">${stats.totalRevenus.toFixed(2)} &euro;</div>
+              <div style="font-size:24px;font-weight:700;color:var(--green)">${(stats.totalSalaires || 0).toFixed(2)} &euro;</div>
             </div>
+            ${(stats.totalPoleEmploi || 0) > 0 ? `<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:rgba(0,0,0,0.2);border-radius:8px;border-left:4px solid var(--blue)">
+              <div>
+                <div style="font-size:16px;font-weight:700">Case 1AP</div>
+                <div style="font-size:11px;color:var(--txt2)">Allocations chomage (Pole Emploi / ARE)</div>
+              </div>
+              <div style="font-size:24px;font-weight:700;color:var(--blue)">${stats.totalPoleEmploi.toFixed(2)} &euro;</div>
+            </div>` : ''}
             <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:rgba(0,0,0,0.2);border-radius:8px;border-left:4px solid var(--orange)">
               <div>
                 <div style="font-size:16px;font-weight:700">Case 1AK</div>

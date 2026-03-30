@@ -263,9 +263,13 @@ ${content}
       <div class="resume-box">
         <h3>A reporter sur la declaration d'impots ${annee}</h3>
         <div class="resume-row" style="padding:8px 12px;background:#f0fdf4;border:1px solid #16a34a;border-radius:4px">
-          <span class="resume-label"><strong>Case 1AJ</strong> - Salaires nets imposables</span>
-          <span class="resume-val" style="font-size:16px">${stats.totalRevenus.toFixed(2)} &euro;</span>
+          <span class="resume-label"><strong>Case 1AJ</strong> - Salaires nets imposables (missions)</span>
+          <span class="resume-val" style="font-size:16px">${(stats.totalSalaires || 0).toFixed(2)} &euro;</span>
         </div>
+        ${(stats.totalPoleEmploi || 0) > 0 ? `<div class="resume-row" style="padding:8px 12px;background:#eff6ff;border:1px solid #3b82f6;border-radius:4px;margin-top:8px">
+          <span class="resume-label"><strong>Case 1AP</strong> - Allocations chomage (Pole Emploi / ARE)</span>
+          <span class="resume-val" style="font-size:16px">${stats.totalPoleEmploi.toFixed(2)} &euro;</span>
+        </div>` : ''}
         <div class="resume-row" style="padding:8px 12px;background:#fffbeb;border:1px solid #d97706;border-radius:4px;margin-top:8px">
           <span class="resume-label"><strong>Case 1AK</strong> - Frais reels (cocher "option frais reels")</span>
           <span class="resume-val" style="font-size:16px">${fraisKm.toFixed(2)} &euro;</span>
