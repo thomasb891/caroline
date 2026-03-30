@@ -169,7 +169,28 @@ const Planning = {
     const dateLabel = new Date(date + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
 
     const body = `
-      <p style="color:var(--txt2);font-size:13px;margin-bottom:16px">${dateLabel}</p>
+      ${isEdit ? `<p style="color:var(--txt2);font-size:13px;margin-bottom:16px">${dateLabel}</p>` : `
+      <div class="form-group">
+        <label class="form-check" style="margin-bottom:12px">
+          <input type="checkbox" id="mMultiDays">
+          Plusieurs jours (plage de dates)
+        </label>
+      </div>
+      <div id="mSingleDate">
+        <p style="color:var(--txt2);font-size:13px;margin-bottom:16px">${dateLabel}</p>
+      </div>
+      <div id="mDateRange" style="display:none">
+        <div class="form-row" style="margin-bottom:16px">
+          <div class="form-group">
+            <label class="form-label">Date debut</label>
+            <input type="date" class="form-input" id="mDateDebut" value="${date}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Date fin</label>
+            <input type="date" class="form-input" id="mDateFin" value="${date}">
+          </div>
+        </div>
+      </div>`}
       <div class="form-group">
         <label class="form-label">Etablissement</label>
         <select class="form-select" id="mEtab">
@@ -216,6 +237,14 @@ const Planning = {
     `;
 
     App.openModal(isEdit ? 'Modifier la mission' : 'Nouvelle mission', body, footer);
+
+    // Toggle multi-days
+    if (!isEdit) {
+      document.getElementById('mMultiDays').onchange = (e) => {
+        document.getElementById('mSingleDate').style.display = e.target.checked ? 'none' : 'block';
+        document.getElementById('mDateRange').style.display = e.target.checked ? 'block' : 'none';
+      };
+    }
 
     // Auto-fill KM from etablissement
     const etabSelect = document.getElementById('mEtab');
@@ -264,18 +293,43 @@ const Planning = {
         heures = Math.max(0, heures);
       }
 
-      const data = {
-        date, etablissement: etab,
+      const baseData = {
+        etablissement: etab,
         heureDebut: debut, heureFin: fin,
         pauseDebut: pauseD, pauseFin: pauseF,
         km, heuresTravaillees: +heures.toFixed(4)
       };
 
-      if (isEdit) await API.missions.update(mission.id, data);
-      else await API.missions.create(data);
-
-      App.closeModal();
-      App.toast(isEdit ? 'Mission modifiee' : 'Mission ajoutee');
+      if (isEdit) {
+        await API.missions.update(mission.id, { ...baseData, date });
+        App.closeModal();
+        App.toast('Mission modifiee');
+      } else {
+        const multiDays = document.getElementById('mMultiDays') && document.getElementById('mMultiDays').checked;
+        if (multiDays) {
+          const dDebut = document.getElementById('mDateDebut').value;
+          const dFin = document.getElementById('mDateFin').value;
+          if (!dDebut || !dFin || dFin < dDebut) return App.toast('Verifier les dates', 'error');
+          let count = 0;
+          const cur = new Date(dDebut + 'T00:00:00');
+          const end = new Date(dFin + 'T00:00:00');
+          while (cur <= end) {
+            const weekday = cur.getDay();
+            if (weekday !== 0 && weekday !== 6) { // Skip weekends
+              const d = cur.toISOString().slice(0, 10);
+              await API.missions.create({ ...baseData, date: d });
+              count++;
+            }
+            cur.setDate(cur.getDate() + 1);
+          }
+          App.closeModal();
+          App.toast(count + ' missions ajoutees');
+        } else {
+          await API.missions.create({ ...baseData, date });
+          App.closeModal();
+          App.toast('Mission ajoutee');
+        }
+      }
       this.render();
     };
 
