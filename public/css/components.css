@@ -282,8 +282,11 @@ td.num { font-variant-numeric: tabular-nums; font-weight: 500; }
 }
 .mission-chip.stage { background: var(--blue-bg); color: var(--blue); }
 .mission-chip.absence { background: rgba(168,85,247,0.12); color: #a855f7; }
+.mission-chip.vacances { background: rgba(234,179,8,0.15); color: #eab308; }
 .cal-day.has-absence { border-color: #a855f7; }
 .cal-day.has-absence .day-num { color: #a855f7; }
+.cal-day.has-vacances { border-color: #eab308; background: rgba(234,179,8,0.05); }
+.cal-day.has-vacances .day-num { color: #eab308; }
 .mission-chip .chip-hours {
   font-size: 9px;
   opacity: 0.8;

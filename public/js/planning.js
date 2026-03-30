@@ -4,14 +4,18 @@ const Planning = {
   missions: [],
   etablissements: [],
 
+  vacances: [],
+
   async render() {
     const moisKey = App.getMoisKey();
-    const [missions, etabs] = await Promise.all([
+    const [missions, etabs, vacances] = await Promise.all([
       API.missions.list(moisKey),
-      API.etablissements.list()
+      API.etablissements.list(),
+      API.vacances.list(moisKey)
     ]);
     this.missions = missions;
     this.etablissements = etabs;
+    this.vacances = vacances;
 
     const display = document.getElementById('monthDisplay');
     if (display) display.textContent = App.getMoisLabel();
@@ -50,7 +54,11 @@ const Planning = {
         <h1>Planning - ${App.getMoisLabel()}</h1>
         <p>Caroline - Missions Hublo</p>
       </div>
-      <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px">
+        <button class="btn-print" id="btnVacances">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+          Vacances
+        </button>
         <button class="btn-print" onclick="Print.openPrintChoice()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
           Imprimer
@@ -78,6 +86,7 @@ const Planning = {
       </div>
       <div class="calendar-grid" id="calGrid"></div>
     `;
+    document.getElementById('btnVacances').onclick = () => this.openVacancesModal();
     this.renderCalendar();
   },
 
@@ -107,14 +116,21 @@ const Planning = {
 
       const hasWork = dayMissions.some(m => !this._isAbsence(m.etablissement));
       const hasAbsence = dayMissions.some(m => this._isAbsence(m.etablissement));
+      const dayVacances = this.vacances.filter(v => dateStr >= v.dateDebut && dateStr <= v.dateFin);
+      const isVacances = dayVacances.length > 0;
 
       let cls = 'cal-day';
       if (isToday) cls += ' today';
       if (hasWork) cls += ' has-mission';
+      else if (isVacances) cls += ' has-vacances';
       else if (hasAbsence) cls += ' has-absence';
       if (isWeekend) cls += ' day-weekend';
 
-      let chips = dayMissions.map(m => {
+      let chips = '';
+      if (isVacances && !hasWork) {
+        chips += dayVacances.map(v => `<div class="mission-chip vacances">${v.motif || 'Vacances'}</div>`).join('');
+      }
+      chips += dayMissions.map(m => {
         const name = m.etablissement || '?';
         const short = name.length > 15 ? name.slice(0, 14) + '...' : name;
         const isStage = name.toLowerCase().includes('stage');
@@ -272,5 +288,74 @@ const Planning = {
         this.render();
       };
     }
+  },
+
+  openVacancesModal() {
+    // Show existing vacances + form to add
+    let listHTML = '';
+    if (this.vacances.length) {
+      listHTML = `<div style="margin-bottom:16px">
+        <div style="font-size:12px;font-weight:600;color:var(--txt2);margin-bottom:8px">VACANCES POSEES</div>
+        ${this.vacances.map(v => `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:rgba(0,0,0,0.2);border-radius:6px;margin-bottom:4px">
+          <div>
+            <span style="font-weight:600">${v.motif || 'Vacances'}</span>
+            <span style="color:var(--txt2);font-size:12px;margin-left:8px">du ${v.dateDebut ? v.dateDebut.split('-').reverse().join('/') : ''} au ${v.dateFin ? v.dateFin.split('-').reverse().join('/') : ''}</span>
+          </div>
+          <button class="btn-ghost btn-sm" data-del-vac="${v.id}" style="color:var(--red)">Supprimer</button>
+        </div>`).join('')}
+      </div>`;
+    }
+
+    const body = `
+      ${listHTML}
+      <div style="font-size:12px;font-weight:600;color:var(--txt2);margin-bottom:8px">AJOUTER DES VACANCES</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Date debut</label>
+          <input type="date" class="form-input" id="vDebut">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date fin</label>
+          <input type="date" class="form-input" id="vFin">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Motif</label>
+        <select class="form-select" id="vMotif">
+          <option value="Vacances">Vacances</option>
+          <option value="Conge maladie">Conge maladie</option>
+          <option value="Conge sans solde">Conge sans solde</option>
+          <option value="Repos">Repos</option>
+          <option value="Formation">Formation</option>
+        </select>
+      </div>
+    `;
+    const footer = `
+      <button class="btn btn-secondary" onclick="App.closeModal()">Fermer</button>
+      <button class="btn btn-primary" id="vSave">Ajouter</button>
+    `;
+    App.openModal('Vacances', body, footer);
+
+    // Delete buttons
+    document.querySelectorAll('[data-del-vac]').forEach(btn => {
+      btn.onclick = async () => {
+        await API.vacances.remove(btn.dataset.delVac);
+        App.closeModal();
+        App.toast('Vacances supprimees');
+        this.render();
+      };
+    });
+
+    document.getElementById('vSave').onclick = async () => {
+      const debut = document.getElementById('vDebut').value;
+      const fin = document.getElementById('vFin').value;
+      if (!debut || !fin) return App.toast('Remplir les dates', 'error');
+      if (fin < debut) return App.toast('La date de fin doit etre apres le debut', 'error');
+      const motif = document.getElementById('vMotif').value;
+      await API.vacances.create({ dateDebut: debut, dateFin: fin, motif });
+      App.closeModal();
+      App.toast('Vacances ajoutees');
+      this.render();
+    };
   }
 };

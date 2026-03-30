@@ -193,20 +193,6 @@ const Etablissements = {
       </div>
 
       <div style="border-top:1px solid var(--border);margin:16px 0;padding-top:16px">
-        <div style="font-size:12px;font-weight:600;color:var(--txt2);margin-bottom:12px">DOCUMENTS RECUS</div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
-        <label class="form-check"><input type="checkbox" id="eDocContrat" ${etab && etab.docContrat ? 'checked' : ''}> Contrat de travail</label>
-        <label class="form-check"><input type="checkbox" id="eDocFinContrat" ${etab && etab.docFinContrat ? 'checked' : ''}> Certificat fin de contrat</label>
-        <label class="form-check"><input type="checkbox" id="eDocAttestation" ${etab && etab.docAttestation ? 'checked' : ''}> Attestation employeur</label>
-        <label class="form-check"><input type="checkbox" id="eDocSolde" ${etab && etab.docSolde ? 'checked' : ''}> Solde de tout compte</label>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Notes documents</label>
-        <textarea class="form-input" id="eDocNotes" rows="2" style="resize:vertical" placeholder="Ex: Manque attestation Pole Emploi...">${etab ? etab.docNotes || '' : ''}</textarea>
-      </div>
-
-      <div style="border-top:1px solid var(--border);margin:16px 0;padding-top:16px">
         <div style="font-size:12px;font-weight:600;color:var(--txt2);margin-bottom:12px">CONTRAT & REMUNERATION</div>
       </div>
       <div class="form-group">
@@ -284,11 +270,6 @@ const Etablissements = {
         receptionDocs: document.getElementById('eReceptionDocs').value,
         siteUrl: document.getElementById('eSiteUrl').value.trim(),
         typeContrat: document.getElementById('eContrat').value,
-        docContrat: document.getElementById('eDocContrat').checked,
-        docFinContrat: document.getElementById('eDocFinContrat').checked,
-        docAttestation: document.getElementById('eDocAttestation').checked,
-        docSolde: document.getElementById('eDocSolde').checked,
-        docNotes: document.getElementById('eDocNotes').value.trim(),
         tauxHoraire: parseFloat(document.getElementById('eTaux').value) || 0,
         ifc: parseFloat(document.getElementById('eIFC').value) || 0,
         cp: parseFloat(document.getElementById('eCP').value) || 0

@@ -23,6 +23,11 @@ const API = {
     update: (id, d) => API.put(`/api/paiements/${id}`, d),
     remove: (id) => API.del(`/api/paiements/${id}`)
   },
+  vacances: {
+    list: (mois) => API.get(`/api/vacances?mois=${mois}`),
+    create: (d) => API.post('/api/vacances', d),
+    remove: (id) => API.del(`/api/vacances/${id}`)
+  },
   stats: {
     annuel: (a) => API.get(`/api/stats/annuel?annee=${a}`)
   },

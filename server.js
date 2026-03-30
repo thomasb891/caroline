@@ -100,6 +100,30 @@ app.delete('/api/paiements/:id', (req, res) => {
   res.json({ ok: true });
 });
 
+// --- Vacances ---
+app.get('/api/vacances', (req, res) => {
+  let list = readJSON('vacances.json');
+  if (req.query.mois) {
+    list = list.filter(v => {
+      return v.dateDebut <= req.query.mois + '-31' && v.dateFin >= req.query.mois + '-01';
+    });
+  }
+  res.json(list);
+});
+app.post('/api/vacances', (req, res) => {
+  const list = readJSON('vacances.json');
+  const item = { id: uid(), ...req.body };
+  list.push(item);
+  writeJSON('vacances.json', list);
+  res.json(item);
+});
+app.delete('/api/vacances/:id', (req, res) => {
+  let list = readJSON('vacances.json');
+  list = list.filter(e => e.id !== req.params.id);
+  writeJSON('vacances.json', list);
+  res.json({ ok: true });
+});
+
 // --- Config ---
 app.get('/api/config', (req, res) => {
   const p = path.join(DATA, 'config.json');
