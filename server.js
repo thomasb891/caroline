@@ -124,6 +124,28 @@ app.delete('/api/vacances/:id', (req, res) => {
   res.json({ ok: true });
 });
 
+// --- Documents (suivi par mois) ---
+app.get('/api/documents', (req, res) => {
+  let list = readJSON('documents.json');
+  if (req.query.mois) list = list.filter(d => d.mois === req.query.mois);
+  res.json(list);
+});
+app.post('/api/documents', (req, res) => {
+  const list = readJSON('documents.json');
+  // Upsert: update if same mois+etablissement exists
+  const i = list.findIndex(d => d.mois === req.body.mois && d.etablissement === req.body.etablissement);
+  if (i >= 0) {
+    list[i] = { ...list[i], ...req.body };
+    writeJSON('documents.json', list);
+    res.json(list[i]);
+  } else {
+    const item = { id: uid(), ...req.body };
+    list.push(item);
+    writeJSON('documents.json', list);
+    res.json(item);
+  }
+});
+
 // --- Config ---
 app.get('/api/config', (req, res) => {
   const p = path.join(DATA, 'config.json');

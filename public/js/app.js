@@ -63,6 +63,14 @@ const App = {
       </div>`;
       document.getElementById('prevYearI').onclick = () => { Impots.currentYear--; Impots.render(); };
       document.getElementById('nextYearI').onclick = () => { Impots.currentYear++; Impots.render(); };
+    } else if (page === 'documents') {
+      actions.innerHTML = `<div class="month-selector">
+        <button class="btn-icon" id="prevMonthD"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
+        <span class="month-display" id="monthDisplayD"></span>
+        <button class="btn-icon" id="nextMonthD"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>
+      </div>`;
+      document.getElementById('prevMonthD').onclick = () => { this.currentDate.setMonth(this.currentDate.getMonth() - 1); Documents.render(); };
+      document.getElementById('nextMonthD').onclick = () => { this.currentDate.setMonth(this.currentDate.getMonth() + 1); Documents.render(); };
     } else {
       actions.innerHTML = '';
     }
