@@ -553,6 +553,13 @@ async function updatePrixGasoil() {
         maj: s.gazole_maj
       }));
 
+    // Aussi grouper par zone (ville) pour conseiller selon le trajet
+    const zones = {};
+    stations.forEach(s => {
+      const v = s.ville || 'Autre';
+      if (!zones[v] || s.prix < zones[v].prix) zones[v] = s;
+    });
+
     const moinsChere = stations[0];
     console.log(`[Prix Gasoil] Le moins cher: ${moinsChere.prix} EUR/L - ${moinsChere.adresse}, ${moinsChere.ville}`);
 
@@ -561,6 +568,7 @@ async function updatePrixGasoil() {
     config.prixGasoilStation = `${moinsChere.adresse}, ${moinsChere.ville}`;
     config.prixGasoilMaj = new Date().toISOString();
     config.stationsProches = stations.slice(0, 5);
+    config.stationsParZone = zones;
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
 
     // Aussi sauvegarder dans l'historique du mois

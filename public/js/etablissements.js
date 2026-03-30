@@ -130,7 +130,27 @@ const Etablissements = {
     try {
       const data = await API.get('/api/prix-gasoil/stations');
       if (data.stations && data.stations.length) {
-        const rows = data.stations.map((s, i) => `
+        // Grouper : sur trajet Royan (pour missions Royan/Breuillet/St Sulpice), Saintes (pour missions locales), Saujon
+        const trajets = {
+          'Trajet Royan (Issambres, Harmonie, Aloes, Oceane)': ['Royan', 'Breuillet', 'Saint-Sulpice', 'Arvert', 'Les Mathes', 'Le Gua', 'Saint-Georges'],
+          'Trajet Saintes (Jardins, Clinique, Petites Soeurs)': ['Saintes', 'Saint-Savinien'],
+          'Trajet Saujon (Sud Saintonge)': ['Saujon', 'Pons'],
+          'Autres': []
+        };
+        let zoneRows = '';
+        for (const [trajet, villes] of Object.entries(trajets)) {
+          const match = data.stations.filter(s => villes.some(v => (s.ville || '').includes(v)));
+          if (match.length) {
+            const best = match[0];
+            zoneRows += `<tr>
+              <td style="font-size:11px;color:var(--txt2)">${trajet}</td>
+              <td style="font-size:11px">${best.adresse}, ${best.ville}</td>
+              <td class="num" style="font-size:12px;font-weight:600;color:var(--green)">${best.prix} &euro;/L</td>
+            </tr>`;
+          }
+        }
+
+        const allRows = data.stations.map((s, i) => `
           <tr${i === 0 ? ' style="font-weight:600;color:var(--green)"' : ''}>
             <td style="font-size:12px">${s.adresse}, ${s.ville}</td>
             <td class="num" style="font-size:13px;font-weight:600">${s.prix} &euro;/L</td>
@@ -140,13 +160,20 @@ const Etablissements = {
         stationsHTML = `
           <div style="margin-top:16px">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-              <div class="label">STATIONS LES MOINS CHERES</div>
+              <div class="label">STATIONS PAR TRAJET</div>
               <button class="btn btn-sm btn-ghost" id="refreshPrix" style="font-size:10px">Actualiser</button>
             </div>
-            <div class="table-wrap"><table>
-              <thead><tr><th>Station</th><th style="text-align:right">Gazole</th></tr></thead>
-              <tbody>${rows}</tbody>
-            </table></div>
+            ${zoneRows ? `<div class="table-wrap" style="margin-bottom:12px"><table>
+              <thead><tr><th>Trajet</th><th>Station la moins chere</th><th style="text-align:right">Prix</th></tr></thead>
+              <tbody>${zoneRows}</tbody>
+            </table></div>` : ''}
+            <details style="cursor:pointer">
+              <summary style="font-size:11px;color:var(--txt3);margin-bottom:8px">Voir toutes les stations</summary>
+              <div class="table-wrap"><table>
+                <thead><tr><th>Station</th><th style="text-align:right">Gazole</th></tr></thead>
+                <tbody>${allRows}</tbody>
+              </table></div>
+            </details>
             <div style="font-size:10px;color:var(--txt3);margin-top:4px">MAJ: ${maj} - Source: prix-carburants.gouv.fr</div>
           </div>
         `;
