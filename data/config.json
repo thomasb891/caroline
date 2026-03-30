@@ -8,7 +8,6 @@
   "vehicules": [
     {
       "id": "v1",
-      "nom": "Megane",
       "plaque": "FQ-942-XW",
       "marque": "Renault",
       "modele": "Megane Break 1.5 DCI 115",
@@ -16,6 +15,16 @@
       "consommation": 5.5,
       "puissanceFiscale": 6,
       "actif": true
+    },
+    {
+      "id": "v2",
+      "plaque": "FC-823-HC",
+      "marque": "Skoda",
+      "modele": "Citigo",
+      "carburant": "essence",
+      "consommation": 4.5,
+      "puissanceFiscale": 3,
+      "actif": false
     }
   ],
   "consommation": 5.5,
