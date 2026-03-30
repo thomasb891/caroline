@@ -516,7 +516,85 @@ app.post('/api/logs/purge', (req, res) => {
   res.json({ ok: true });
 });
 
+// --- Backup automatique sur NAS chaque nuit ---
+const NAS_BACKUP = '\\\\MYCLOUD-1KSKLK\\Serveur\\Caro Hublo\\Backups';
+
+function doBackup() {
+  try {
+    fs.accessSync('\\\\MYCLOUD-1KSKLK\\Serveur\\Caro Hublo', fs.constants.W_OK);
+  } catch (e) {
+    console.log('[Backup] NAS non accessible, backup ignore');
+    return;
+  }
+
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  const backupDir = path.join(NAS_BACKUP, dateStr);
+
+  try {
+    fs.mkdirSync(backupDir, { recursive: true });
+    const files = ['missions.json', 'paiements.json', 'etablissements.json', 'documents.json', 'config.json', 'logs.json', 'comparaison.json', 'prix-gasoil.json'];
+    let count = 0;
+    files.forEach(f => {
+      const src = path.join(DATA, f);
+      if (fs.existsSync(src)) {
+        fs.copyFileSync(src, path.join(backupDir, f));
+        count++;
+      }
+    });
+    console.log(`[Backup] ${count} fichiers sauvegardes dans ${backupDir}`);
+
+    // Garder seulement les 30 derniers backups
+    try {
+      const dirs = fs.readdirSync(NAS_BACKUP).sort().reverse();
+      dirs.slice(30).forEach(d => {
+        const p = path.join(NAS_BACKUP, d);
+        try {
+          fs.readdirSync(p).forEach(f => fs.unlinkSync(path.join(p, f)));
+          fs.rmdirSync(p);
+        } catch (e) {}
+      });
+    } catch (e) {}
+  } catch (e) {
+    console.log('[Backup] Erreur:', e.message);
+  }
+}
+
+// Planifier backup a 3h du matin
+function scheduleBackup() {
+  const now = new Date();
+  const next3am = new Date(now);
+  next3am.setHours(3, 0, 0, 0);
+  if (next3am <= now) next3am.setDate(next3am.getDate() + 1);
+  const delay = next3am - now;
+  console.log(`[Backup] Prochain backup dans ${Math.round(delay/1000/60)} minutes (3h00)`);
+  setTimeout(() => {
+    doBackup();
+    setInterval(doBackup, 24 * 60 * 60 * 1000); // puis toutes les 24h
+  }, delay);
+}
+
+// API pour backup manuel
+app.post('/api/backup', (req, res) => {
+  doBackup();
+  res.json({ ok: true, message: 'Backup effectue' });
+});
+
+app.get('/api/backup/status', (req, res) => {
+  try {
+    fs.accessSync(NAS_BACKUP, fs.constants.R_OK);
+    const dirs = fs.readdirSync(NAS_BACKUP).sort().reverse();
+    res.json({ nasOk: true, lastBackup: dirs[0] || null, nbBackups: dirs.length });
+  } catch (e) {
+    res.json({ nasOk: false, lastBackup: null, nbBackups: 0 });
+  }
+});
+
 // Standalone mode
 if (require.main === module) {
-  app.listen(PORT, () => console.log(`Hublo Gestion running on http://localhost:${PORT}`));
+  app.listen(PORT, () => {
+    console.log(`Hublo Gestion running on http://localhost:${PORT}`);
+    scheduleBackup();
+    doBackup(); // backup au demarrage aussi
+  });
 }

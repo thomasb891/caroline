@@ -63,6 +63,13 @@ const Etablissements = {
         </div>
         <div id="vehiculeSection"></div>
       </div>
+
+      <div style="margin-top:32px">
+        <div class="section-header">
+          <h2 class="section-title">Sauvegarde</h2>
+        </div>
+        <div id="backupSection"></div>
+      </div>
       <div style="text-align:center;padding:20px;font-size:11px;color:var(--txt3)">&copy; Thomas</div>
     `;
 
@@ -76,6 +83,32 @@ const Etablissements = {
     });
 
     this.renderVehicule(config);
+    this.renderBackup();
+  },
+
+  async renderBackup() {
+    const status = await API.get('/api/backup/status');
+    const backupEl = document.getElementById('backupSection');
+    if (!backupEl) return;
+    backupEl.innerHTML = `
+      <div class="stat-card" style="max-width:500px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div class="label">SAUVEGARDE NAS</div>
+            <div style="font-size:14px;font-weight:600;margin-top:4px">${status.nasOk ? (status.lastBackup ? 'Dernier : ' + status.lastBackup : 'Aucun backup') : 'NAS non accessible'}</div>
+            <div class="sub">${status.nasOk ? status.nbBackups + ' sauvegardes conservees' : 'Verifier la connexion au NAS'}</div>
+          </div>
+          <button class="btn btn-sm btn-primary" id="doBackup">${status.nasOk ? 'Sauvegarder' : 'Reessayer'}</button>
+        </div>
+      </div>
+    `;
+    document.getElementById('doBackup').onclick = async () => {
+      document.getElementById('doBackup').textContent = 'En cours...';
+      document.getElementById('doBackup').disabled = true;
+      await API.post('/api/backup', {});
+      App.toast('Backup effectue');
+      this.renderBackup();
+    };
   },
 
   renderVehicule(config) {
