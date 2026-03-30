@@ -261,10 +261,16 @@ ${content}
       </div>
 
       <div class="resume-box">
-        <h3>Resume pour la declaration d'impots ${annee}</h3>
-        <div class="resume-row"><span class="resume-label">Revenus nets percus</span><span class="resume-val">${stats.totalRevenus.toFixed(2)} &euro;</span></div>
-        <div class="resume-row"><span class="resume-label">Frais kilometriques deductibles</span><span class="resume-val">${fraisKm.toFixed(2)} &euro;</span></div>
-        <div class="resume-row total"><span class="resume-label">Net imposable</span><span class="resume-val">${netImposable.toFixed(2)} &euro;</span></div>
+        <h3>A reporter sur la declaration d'impots ${annee}</h3>
+        <div class="resume-row" style="padding:8px 12px;background:#f0fdf4;border:1px solid #16a34a;border-radius:4px">
+          <span class="resume-label"><strong>Case 1AJ</strong> - Salaires nets imposables</span>
+          <span class="resume-val" style="font-size:16px">${stats.totalRevenus.toFixed(2)} &euro;</span>
+        </div>
+        <div class="resume-row" style="padding:8px 12px;background:#fffbeb;border:1px solid #d97706;border-radius:4px;margin-top:8px">
+          <span class="resume-label"><strong>Case 1AK</strong> - Frais reels (cocher "option frais reels")</span>
+          <span class="resume-val" style="font-size:16px">${fraisKm.toFixed(2)} &euro;</span>
+        </div>
+        <div style="font-size:9px;color:#666;margin-top:6px">${stats.totalKm.toFixed(0)} km x ${stats.config.baremeKm} &euro;/km (bareme ${stats.config.puissanceFiscale} CV)</div>
       </div>
 
       <div class="section-title">Verification des fiches de paie par etablissement</div>

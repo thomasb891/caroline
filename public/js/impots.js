@@ -83,19 +83,24 @@ const Impots = {
         </div>
 
         <div class="impot-card resume-card">
-          <h3>Resume pour la declaration</h3>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-top:16px">
-            <div>
-              <div style="font-size:12px;color:var(--txt3);margin-bottom:4px">REVENUS BRUTS</div>
+          <h3>A reporter sur la declaration d'impots</h3>
+          <div style="margin-top:16px;display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:rgba(0,0,0,0.2);border-radius:8px;border-left:4px solid var(--green)">
+              <div>
+                <div style="font-size:16px;font-weight:700">Case 1AJ</div>
+                <div style="font-size:11px;color:var(--txt2)">Salaires nets imposables</div>
+              </div>
               <div style="font-size:24px;font-weight:700;color:var(--green)">${stats.totalRevenus.toFixed(2)} &euro;</div>
             </div>
-            <div>
-              <div style="font-size:12px;color:var(--txt3);margin-bottom:4px">FRAIS KM DEDUCTIBLES</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:rgba(0,0,0,0.2);border-radius:8px;border-left:4px solid var(--orange)">
+              <div>
+                <div style="font-size:16px;font-weight:700">Case 1AK</div>
+                <div style="font-size:11px;color:var(--txt2)">Frais reels (cocher "option frais reels")</div>
+              </div>
               <div style="font-size:24px;font-weight:700;color:var(--orange)">${stats.fraisKm.toFixed(2)} &euro;</div>
             </div>
-            <div>
-              <div style="font-size:12px;color:var(--txt3);margin-bottom:4px">NET IMPOSABLE</div>
-              <div style="font-size:24px;font-weight:700;color:var(--accent2)">${(stats.totalRevenus - stats.fraisKm).toFixed(2)} &euro;</div>
+            <div style="font-size:11px;color:var(--txt3);padding:0 4px">
+              ${stats.totalKm.toFixed(0)} km x ${baremeKm} &euro;/km (bareme ${puissance} CV) = ${stats.fraisKm.toFixed(2)} &euro; de frais kilometriques
             </div>
           </div>
         </div>
