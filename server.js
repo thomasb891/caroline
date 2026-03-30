@@ -565,7 +565,7 @@ async function updatePrixGasoil() {
               let d = ''; res.on('data', c => d += c); res.on('end', () => resolve(d));
             });
             req.on('error', reject);
-            setTimeout(() => req.destroy(), 3000);
+            setTimeout(() => req.destroy(), 8000);
           });
           const match = html.match(/<strong>([^<]+)<\/strong>/);
           if (match) {
