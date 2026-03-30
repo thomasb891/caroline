@@ -413,37 +413,53 @@ td.num { font-variant-numeric: tabular-nums; font-weight: 500; }
 
 /* --- Responsive --- */
 @media (max-width: 768px) {
-  .cards-row { grid-template-columns: 1fr 1fr; gap: 10px; }
-  .stat-card { padding: 14px; }
-  .stat-card .value { font-size: 22px; }
-  .cal-day { min-height: 60px; padding: 4px; }
-  .cal-day .day-num { font-size: 11px; }
-  .mission-chip { font-size: 9px; padding: 2px 4px; }
-  .ferie-label { font-size: 7px; }
+  .cards-row { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stat-card { padding: 12px; }
+  .stat-card .label { font-size: 10px; }
+  .stat-card .value { font-size: 18px; }
+  .stat-card .sub { font-size: 10px; }
+  .cal-day { min-height: 55px; padding: 3px; }
+  .cal-day .day-num { font-size: 10px; }
+  .mission-chip { font-size: 8px; padding: 2px 3px; }
+  .ferie-label { font-size: 6px; }
   .impot-grid { grid-template-columns: 1fr; }
   .form-row { grid-template-columns: 1fr; }
   .etab-grid { grid-template-columns: 1fr; }
+  .section-title { font-size: 14px; }
+
+  /* Topbar compact */
+  .topbar { padding: 0 10px; height: 56px; }
+  .page-title { font-size: 16px; }
+  .month-selector { gap: 4px; }
+  .month-display { font-size: 12px; min-width: 100px; }
+  .btn-icon { width: 30px; height: 30px; }
+
+  /* Buttons compact */
+  .btn-print { padding: 6px 10px; font-size: 10px; }
+  .btn-sm { padding: 5px 10px; font-size: 11px; }
+
+  /* Tables - allow smaller */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { min-width: 500px; }
+  th { padding: 8px 6px !important; font-size: 9px !important; }
+  td { padding: 8px 6px !important; font-size: 11px !important; }
 
   /* Modal fullscreen on mobile */
-  .modal {
-    max-width: 100%;
-    max-height: 100vh;
-    height: 100vh;
-    border-radius: 0;
-    margin: 0;
-  }
+  .modal { max-width: 100%; max-height: 100vh; height: 100vh; border-radius: 0; margin: 0; }
   .modal-overlay { padding: 0; }
 
-  /* Tables horizontal scroll */
-  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  table { min-width: 600px; }
+  /* Mobile bottom nav - 6 items fit */
+  .mob-item { padding: 4px 2px; font-size: 8px; min-width: 0; }
+  .mob-item svg { width: 18px; height: 18px; }
 
-  /* Mobile bottom nav - 5 items fit */
-  .mob-item { padding: 6px 4px; font-size: 9px; min-width: 0; }
-  .mob-item svg { width: 20px; height: 20px; }
+  /* Impots cards compact */
+  .resume-card div[style*="grid-template-columns: 1fr 1fr 1fr"] { grid-template-columns: 1fr !important; }
 }
 @media (max-width: 380px) {
   .cards-row { grid-template-columns: 1fr; }
+  .cal-day { min-height: 45px; }
+  .mission-chip { font-size: 7px; }
+  table { min-width: 400px; }
 }
 
 /* --- Print styles --- */

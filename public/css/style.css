@@ -165,8 +165,9 @@ body {
   .main { margin-left: 0; }
   .mobile-nav { display: flex; }
   .menu-btn { display: block; }
-  .page { padding: 16px 16px 80px; }
-  .topbar { padding: 0 16px; }
+  .page { padding: 12px 10px 80px; }
+  .topbar { padding: 0 10px; gap: 8px; height: 52px; }
+  .page-title { font-size: 15px; }
 }
 
 /* --- Scrollbar --- */
