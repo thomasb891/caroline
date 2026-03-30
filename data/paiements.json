@@ -1,0 +1,26 @@
+[
+  {
+    "id": "mncz47pol7qcw",
+    "etablissement": "Les Jardins du haut Thenac",
+    "dateVersement": "2024-01-07",
+    "montant": 123.92,
+    "fichePaye": false,
+    "finContrat": false
+  },
+  {
+    "id": "mncz47pow12ol",
+    "etablissement": "Pôle Emploi",
+    "dateVersement": "2024-02-02",
+    "montant": 469.3,
+    "fichePaye": false,
+    "finContrat": false
+  },
+  {
+    "id": "mncz47pojdpzh",
+    "etablissement": "Pôle Emploi",
+    "dateVersement": "2024-02-04",
+    "montant": 938.6,
+    "fichePaye": false,
+    "finContrat": false
+  }
+]

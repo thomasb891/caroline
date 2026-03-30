@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "hublo",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["server.js"],
+      "port": 3050,
+      "cwd": "C:\\Users\\Administrateur\\Desktop\\Caroline"
+    }
+  ]
+}
