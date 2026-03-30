@@ -101,12 +101,16 @@ const Planning = {
     let salaireBase = 0;
     let totalIFC = 0;
     let totalCP = 0;
+    let totalPrimeNuit = 0;
     workMissions.forEach(m => {
       const e = etabMap[m.etablissement];
       const taux = e && e.tauxHoraire ? e.tauxHoraire : 0;
+      const primeNuit = (m.horaire === 'nuit' && e && e.primeNuit) ? e.primeNuit : 0;
       const ifcPct = e && e.ifc ? e.ifc : 0;
       const cpPct = e && e.cp ? e.cp : 0;
-      const base = (m.heuresTravaillees || 0) * taux;
+      const heures = m.heuresTravaillees || 0;
+      const base = heures * taux + heures * primeNuit;
+      totalPrimeNuit += heures * primeNuit;
       const ifc = base * ifcPct / 100;
       const cp = (base + ifc) * cpPct / 100;
       salaireBase += base;
@@ -144,7 +148,7 @@ const Planning = {
         <div class="stat-card green">
           <div class="label">Estimation salaire</div>
           <div class="value">${estimTotal.toFixed(2)} &euro;</div>
-          <div class="sub">Base ${salaireBase.toFixed(0)}&euro; + IFC ${totalIFC.toFixed(0)}&euro; + CP ${totalCP.toFixed(0)}&euro;</div>
+          <div class="sub">Base ${salaireBase.toFixed(0)}&euro;${totalPrimeNuit > 0 ? ' (dont nuit ' + totalPrimeNuit.toFixed(0) + '&euro;)' : ''} + IFC ${totalIFC.toFixed(0)}&euro; + CP ${totalCP.toFixed(0)}&euro;</div>
         </div>
         <div class="stat-card orange">
           <div class="label">Kilometres</div>
@@ -224,10 +228,12 @@ const Planning = {
         const isStage = name.toLowerCase().includes('stage');
         const absent = this._isAbsence(name);
         const hours = m.heuresTravaillees && !absent ? `${m.heuresTravaillees.toFixed(1)}h` : '';
+        const isNuit = m.horaire === 'nuit';
         const color = etabColor(name);
         const borderStyle = !isStage && !absent ? `border-left:3px solid ${color};` : '';
         const dot = !isStage && !absent ? `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${color};margin-right:3px;flex-shrink:0"></span>` : '';
-        return `<div class="mission-chip${isStage ? ' stage' : ''}${absent ? ' absence' : ''}" data-id="${m.id}" style="${borderStyle}">${dot}${short}${hours ? `<span class="chip-hours"> ${hours}</span>` : ''}</div>`;
+        const nuitBadge = isNuit ? '<span style="font-size:8px;background:var(--blue-bg);color:var(--blue);padding:0 3px;border-radius:3px;margin-left:2px">N</span>' : '';
+        return `<div class="mission-chip${isStage ? ' stage' : ''}${absent ? ' absence' : ''}" data-id="${m.id}" style="${borderStyle}">${dot}${short}${hours ? `<span class="chip-hours"> ${hours}</span>` : ''}${nuitBadge}</div>`;
       }).join('');
 
       html += `<div class="${cls}" data-date="${dateStr}">
@@ -319,14 +325,23 @@ const Planning = {
           <div class="form-computed" id="mHeures">${mission ? (mission.heuresTravaillees || 0).toFixed(2) + 'h' : '0h'}</div>
         </div>
       </div>
-      <div class="form-group">
-        <label class="form-label">Type de contrat</label>
-        <select class="form-select" id="mContrat">
-          <option value="interim" ${!mission || !mission.typeContrat || mission.typeContrat === 'interim' ? 'selected' : ''}>Interim / Mission Hublo</option>
-          <option value="cdd" ${mission && mission.typeContrat === 'cdd' ? 'selected' : ''}>CDD</option>
-          <option value="cdi" ${mission && mission.typeContrat === 'cdi' ? 'selected' : ''}>CDI</option>
-          <option value="vacation" ${mission && mission.typeContrat === 'vacation' ? 'selected' : ''}>Vacation</option>
-        </select>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Type de contrat</label>
+          <select class="form-select" id="mContrat">
+            <option value="interim" ${!mission || !mission.typeContrat || mission.typeContrat === 'interim' ? 'selected' : ''}>Interim / Mission Hublo</option>
+            <option value="cdd" ${mission && mission.typeContrat === 'cdd' ? 'selected' : ''}>CDD</option>
+            <option value="cdi" ${mission && mission.typeContrat === 'cdi' ? 'selected' : ''}>CDI</option>
+            <option value="vacation" ${mission && mission.typeContrat === 'vacation' ? 'selected' : ''}>Vacation</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Horaire</label>
+          <select class="form-select" id="mHoraire">
+            <option value="jour" ${!mission || !mission.horaire || mission.horaire === 'jour' ? 'selected' : ''}>Jour</option>
+            <option value="nuit" ${mission && mission.horaire === 'nuit' ? 'selected' : ''}>Nuit</option>
+          </select>
+        </div>
       </div>
     `;
 
@@ -398,7 +413,8 @@ const Planning = {
         heureDebut: debut, heureFin: fin,
         pauseDebut: pauseD, pauseFin: pauseF,
         km, heuresTravaillees: +heures.toFixed(4),
-        typeContrat: document.getElementById('mContrat').value
+        typeContrat: document.getElementById('mContrat').value,
+        horaire: document.getElementById('mHoraire').value
       };
 
       if (isEdit) {
