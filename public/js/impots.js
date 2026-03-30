@@ -1,7 +1,15 @@
 const Impots = {
+  currentYear: new Date().getFullYear(),
+
   async render() {
-    const annee = App.currentDate.getFullYear().toString();
-    const stats = await API.stats.annuel(annee);
+    const annee = this.currentYear.toString();
+    const yearDisplay = document.getElementById('yearDisplayI');
+    if (yearDisplay) yearDisplay.textContent = annee;
+    const [stats, paiements, etablissements] = await Promise.all([
+      API.stats.annuel(annee),
+      API.paiements.listAnnee(annee),
+      API.etablissements.list()
+    ]);
     const moisNoms = ['Janvier', 'Fevrier', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Aout', 'Septembre', 'Octobre', 'Novembre', 'Decembre'];
 
     const page = document.getElementById('page-impots');
@@ -91,10 +99,73 @@ const Impots = {
             </div>
           </div>
         </div>
+
+        <div class="impot-card" style="grid-column:1/-1">
+          <h3>Verification fiches de paie par etablissement</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr>
+                <th style="width:30px" class="print-check"></th>
+                <th>Etablissement</th>
+                <th>Nb fiches</th>
+                <th>Total recu</th>
+                <th>Derniere fiche</th>
+                <th>Dernier montant</th>
+              </tr></thead>
+              <tbody>${this.buildVerifRows(paiements, etablissements)}</tbody>
+            </table>
+          </div>
+        </div>
       </div>
     `;
 
     document.getElementById('editBareme').onclick = () => this.openBaremeModal(stats.config);
+  },
+
+  buildVerifRows(paiements, etablissements) {
+    // Group paiements by etablissement
+    const byEtab = {};
+    paiements.forEach(p => {
+      const key = p.etablissement || 'Inconnu';
+      if (!byEtab[key]) byEtab[key] = [];
+      byEtab[key].push(p);
+    });
+
+    // Also include etablissements with 0 paiements
+    etablissements.forEach(e => {
+      if (!byEtab[e.nom] && e.nom !== 'RDV' && e.nom !== 'Hotel' && e.nom !== 'Stage') {
+        byEtab[e.nom] = [];
+      }
+    });
+
+    const rows = Object.keys(byEtab).sort().map(etab => {
+      const list = byEtab[etab];
+      const total = list.reduce((s, p) => s + (p.montant || 0), 0);
+      // Sort by date to get the last one
+      const sorted = [...list].sort((a, b) => (b.dateVersement || '').localeCompare(a.dateVersement || ''));
+      const last = sorted[0];
+      const nbFiches = list.filter(p => p.fichePaye).length;
+
+      return `<tr>
+        <td class="print-check" style="text-align:center"><div style="width:16px;height:16px;border:2px solid var(--border);border-radius:3px;display:inline-block"></div></td>
+        <td style="font-weight:500">${etab}</td>
+        <td class="num">${list.length} <span style="font-size:10px;color:var(--txt3)">(${nbFiches} recues)</span></td>
+        <td class="num" style="font-weight:600">${total > 0 ? total.toFixed(2) + ' &euro;' : '-'}</td>
+        <td>${last ? last.dateVersement : '-'}</td>
+        <td class="num">${last ? (last.montant || 0).toFixed(2) + ' &euro;' : '-'}</td>
+      </tr>`;
+    }).join('');
+
+    // Total row
+    const totalAll = paiements.reduce((s, p) => s + (p.montant || 0), 0);
+    return rows + `<tr style="font-weight:700;border-top:2px solid var(--border)">
+      <td></td>
+      <td>TOTAL</td>
+      <td class="num">${paiements.length}</td>
+      <td class="num">${totalAll.toFixed(2)} &euro;</td>
+      <td></td>
+      <td></td>
+    </tr>`;
   },
 
   openBaremeModal(config) {

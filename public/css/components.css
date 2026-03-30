@@ -459,6 +459,7 @@ td.num { font-variant-numeric: tabular-nums; font-weight: 500; }
   th { background: #eee !important; color: #000 !important; border-bottom: 2px solid #000 !important; padding: 6px 10px !important; font-size: 10px !important; }
   td { color: #000 !important; border-bottom: 1px solid #ccc !important; padding: 5px 10px !important; font-size: 11px !important; }
   .impot-total { border-top: 2px solid #000 !important; color: #000 !important; font-size: 14px !important; }
+  .print-check div { border-color: #000 !important; width: 14px !important; height: 14px !important; }
   .section-header { margin-bottom: 8px !important; }
   .section-title { color: #000 !important; }
 
