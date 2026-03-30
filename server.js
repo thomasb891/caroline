@@ -420,6 +420,12 @@ app.get('/api/logs', (req, res) => {
   res.json(logs.slice(0, limit));
 });
 
+app.post('/api/logs/purge', (req, res) => {
+  if (req.body.password !== 'Timeo@') return res.json({ ok: false, error: 'Mot de passe incorrect' });
+  writeJSON('logs.json', []);
+  res.json({ ok: true });
+});
+
 // Standalone mode
 if (require.main === module) {
   app.listen(PORT, () => console.log(`Hublo Gestion running on http://localhost:${PORT}`));

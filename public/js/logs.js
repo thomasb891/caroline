@@ -55,7 +55,10 @@ const Logs = {
     page.innerHTML = `
       <div class="section-header" style="margin-bottom:16px">
         <h2 class="section-title">Journal d'activite</h2>
-        <span style="font-size:12px;color:var(--txt3)">${logs.length} derniers evenements</span>
+        <div style="display:flex;align-items:center;gap:12px">
+          <span style="font-size:12px;color:var(--txt3)">${logs.length} evenements</span>
+          <button class="btn btn-sm btn-danger" id="logPurge">Purger</button>
+        </div>
       </div>
 
       ${logs.length === 0 ? '<div class="empty-state" style="padding:60px 20px"><p>Aucune activite enregistree</p></div>' : `
@@ -70,5 +73,31 @@ const Logs = {
         <tbody>${rows}</tbody>
       </table></div>`}
     `;
+
+    document.getElementById('logPurge').onclick = () => {
+      const body = `
+        <p style="margin-bottom:16px;color:var(--txt2)">Cette action va supprimer tout le journal d'activite.</p>
+        <div class="form-group">
+          <label class="form-label">Mot de passe</label>
+          <input type="password" class="form-input" id="purgePass" placeholder="Entrer le mot de passe">
+        </div>
+      `;
+      const footer = `
+        <button class="btn btn-secondary" onclick="App.closeModal()">Annuler</button>
+        <button class="btn btn-danger" id="purgeConfirm">Purger</button>
+      `;
+      App.openModal('Purger le journal', body, footer);
+      document.getElementById('purgeConfirm').onclick = async () => {
+        const pass = document.getElementById('purgePass').value;
+        const res = await API.post('/api/logs/purge', { password: pass });
+        if (res.ok) {
+          App.closeModal();
+          App.toast('Journal purge');
+          this.render();
+        } else {
+          App.toast(res.error || 'Mot de passe incorrect', 'error');
+        }
+      };
+    };
   }
 };
