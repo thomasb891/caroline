@@ -1,9 +1,10 @@
-const CACHE = 'hublo-v31';
+const CACHE = 'hublo-v40';
 const ASSETS = [
   '/',
   '/index.html',
   '/css/style.css',
   '/css/components.css',
+  '/css/mobile.css',
   '/js/api.js',
   '/js/app.js',
   '/js/planning.js',
@@ -15,9 +16,7 @@ const ASSETS = [
   '/js/etablissements.js',
   '/js/print.js',
   '/js/impots.js',
-  '/manifest.json',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png'
+  '/manifest.json'
 ];
 
 self.addEventListener('install', e => {
