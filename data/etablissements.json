@@ -64,13 +64,16 @@
   {
     "id": "mnd0jco4davwh",
     "nom": "Résidence Harmonie Breuillet 75,8km",
-    "km": 75.8,
+    "km": 75.7,
     "tauxHoraire": 11.24,
     "ifc": 10,
     "cp": 10,
-    "telephone": "",
+    "telephone": "05 46 22 69 69",
     "email": "",
-    "typeContrat": "cdd"
+    "typeContrat": "cdd",
+    "adresse": "13 Place de la Poste, 17920 Breuillet",
+    "lat": 45.691197,
+    "lon": -1.052543
   },
   {
     "id": "mnd0jco450251",
