@@ -14,8 +14,12 @@ const Planning = {
     const display = document.getElementById('monthDisplay');
     if (display) display.textContent = App.getMoisLabel();
 
-    const totalH = missions.reduce((s, m) => s + (m.heuresTravaillees || 0), 0);
-    const totalKm = missions.reduce((s, m) => s + (m.km || 0), 0);
+    const ABSENCES = ['timeo', 'timéo', 'hotel', 'hôtel', 'rdv'];
+    const isAbsence = (name) => ABSENCES.some(a => (name || '').toLowerCase().includes(a));
+    const workMissions = missions.filter(m => !isAbsence(m.etablissement));
+
+    const totalH = workMissions.reduce((s, m) => s + (m.heuresTravaillees || 0), 0);
+    const totalKm = workMissions.reduce((s, m) => s + (m.km || 0), 0);
 
     // Estimation salaire par etablissement (taux/IFC/CP propres a chaque etab)
     const etabMap = {};
@@ -24,7 +28,7 @@ const Planning = {
     let salaireBase = 0;
     let totalIFC = 0;
     let totalCP = 0;
-    missions.forEach(m => {
+    workMissions.forEach(m => {
       const e = etabMap[m.etablissement];
       const taux = e && e.tauxHoraire ? e.tauxHoraire : 0;
       const ifcPct = e && e.ifc ? e.ifc : 0;
@@ -99,17 +103,22 @@ const Planning = {
       const weekday = (new Date(year, month, day).getDay() + 6) % 7;
       const isWeekend = weekday >= 5;
 
+      const hasWork = dayMissions.some(m => !isAbsence(m.etablissement));
+      const hasAbsence = dayMissions.some(m => isAbsence(m.etablissement));
+
       let cls = 'cal-day';
       if (isToday) cls += ' today';
-      if (dayMissions.length) cls += ' has-mission';
+      if (hasWork) cls += ' has-mission';
+      else if (hasAbsence) cls += ' has-absence';
       if (isWeekend) cls += ' day-weekend';
 
       let chips = dayMissions.map(m => {
         const name = m.etablissement || '?';
         const short = name.length > 15 ? name.slice(0, 14) + '...' : name;
         const isStage = name.toLowerCase().includes('stage');
-        const hours = m.heuresTravaillees ? `${m.heuresTravaillees.toFixed(1)}h` : '';
-        return `<div class="mission-chip${isStage ? ' stage' : ''}" data-id="${m.id}">${short}${hours ? `<span class="chip-hours"> ${hours}</span>` : ''}</div>`;
+        const absent = isAbsence(name);
+        const hours = m.heuresTravaillees && !absent ? `${m.heuresTravaillees.toFixed(1)}h` : '';
+        return `<div class="mission-chip${isStage ? ' stage' : ''}${absent ? ' absence' : ''}" data-id="${m.id}">${short}${hours ? `<span class="chip-hours"> ${hours}</span>` : ''}</div>`;
       }).join('');
 
       html += `<div class="${cls}" data-date="${dateStr}">

@@ -281,6 +281,9 @@ td.num { font-variant-numeric: tabular-nums; font-weight: 500; }
   margin-top: 2px;
 }
 .mission-chip.stage { background: var(--blue-bg); color: var(--blue); }
+.mission-chip.absence { background: rgba(168,85,247,0.12); color: #a855f7; }
+.cal-day.has-absence { border-color: #a855f7; }
+.cal-day.has-absence .day-num { color: #a855f7; }
 .mission-chip .chip-hours {
   font-size: 9px;
   opacity: 0.8;
