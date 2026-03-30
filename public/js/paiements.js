@@ -56,6 +56,7 @@ const Paiements = {
 
     const page = document.getElementById('page-paiements');
     page.innerHTML = `
+      <div id="paiementsLastUpdated" style="text-align:right;font-size:11px;color:var(--txt3);margin-bottom:4px"></div>
       <div class="cards-row">
         <div class="stat-card green">
           <div class="label">Total ${annee}</div>
@@ -90,6 +91,7 @@ const Paiements = {
         </tr></tbody>
       </table></div>
 
+      <div style="text-align:center;padding:20px;font-size:11px;color:var(--txt3)">&copy; Thomas</div>
     `;
 
     // Expand/collapse months
@@ -114,6 +116,18 @@ const Paiements = {
     });
 
     document.getElementById('addPaiement').onclick = () => this.openPaiementModal();
+    this.loadLastUpdated();
+  },
+
+  async loadLastUpdated() {
+    try {
+      const log = await API.logs.lastForSection('paiements');
+      const el = document.getElementById('paiementsLastUpdated');
+      if (el && log) {
+        const d = new Date(log.timestamp);
+        el.textContent = `Derniere maj: ${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+      }
+    } catch(e) {}
   },
 
   openPaiementModal(paiement = null) {

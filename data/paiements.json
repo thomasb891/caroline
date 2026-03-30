@@ -425,11 +425,12 @@
   },
   {
     "id": "mnd0jcy6chztl",
-    "etablissement": "Pôle Emploi",
+    "etablissement": "Pole Emploi",
     "dateVersement": "2025-01-05",
     "montant": 1457.93,
     "fichePaye": false,
-    "finContrat": false
+    "finContrat": false,
+    "note": ""
   },
   {
     "id": "mnd0jcy6pq7g5",

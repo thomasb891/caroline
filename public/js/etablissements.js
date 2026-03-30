@@ -63,6 +63,7 @@ const Etablissements = {
         </div>
         <div id="vehiculeSection"></div>
       </div>
+      <div style="text-align:center;padding:20px;font-size:11px;color:var(--txt3)">&copy; Thomas</div>
     `;
 
     document.getElementById('addEtab').onclick = () => this.openEtabModal();
@@ -146,6 +147,7 @@ const Etablissements = {
         <input type="text" class="form-input" id="eNom" value="${etab ? etab.nom : ''}" placeholder="Ex: Residence Harmonie Breuillet">
         <div id="eNomSuggestions" class="search-suggestions"></div>
       </div>
+      <div class="etab-section">
       <div class="form-group">
         <label class="form-label">Adresse</label>
         <input type="text" class="form-input" id="eAdresse" value="${etab ? etab.adresse || '' : ''}" placeholder="Completee automatiquement...">
@@ -165,6 +167,8 @@ const Etablissements = {
         <div id="eKmInfo" style="font-size:11px;color:var(--txt3);margin-top:4px"></div>
       </div>
 
+      </div><!-- end etab-section adresse/km -->
+      <div class="etab-section">
       <div style="border-top:1px solid var(--border);margin:16px 0;padding-top:16px">
         <div style="font-size:12px;font-weight:600;color:var(--txt2);margin-bottom:12px">CONTACT</div>
       </div>
@@ -192,6 +196,8 @@ const Etablissements = {
         <input type="text" class="form-input" id="eSiteUrl" value="${etab ? etab.siteUrl || '' : ''}" placeholder="Ex: https://mon-espace.fr">
       </div>
 
+      </div><!-- end etab-section contact -->
+      <div class="etab-section">
       <div style="border-top:1px solid var(--border);margin:16px 0;padding-top:16px">
         <div style="font-size:12px;font-weight:600;color:var(--txt2);margin-bottom:12px">CONTRAT & REMUNERATION</div>
       </div>
@@ -228,6 +234,7 @@ const Etablissements = {
           <input type="number" step="0.01" class="form-input" id="eARE" value="${etab ? etab.allocationARE || '' : ''}" placeholder="Ex: 48.64">
         </div>
       </div>
+      </div><!-- end etab-section remuneration -->
     `;
     const footer = `
       ${isEdit ? '<button class="btn btn-danger" id="eDelete">Supprimer</button>' : ''}
@@ -236,15 +243,23 @@ const Etablissements = {
     `;
     App.openModal(isEdit ? 'Modifier l\'etablissement' : 'Nouvel etablissement', body, footer);
 
-    // Toggle remuneration fields based on name (Pole Emploi vs other)
-    const updateRemuFields = () => {
+    // Toggle fields based on name
+    const SIMPLE_NAMES = ['rdv', 'timeo', 'timéo', 'hotel', 'hôtel'];
+    const updateFields = () => {
       const nom = (document.getElementById('eNom').value || '').toLowerCase();
       const isPE = nom.includes('emploi') || nom.includes('pole');
-      document.getElementById('remuEtab').style.display = isPE ? 'none' : 'block';
-      document.getElementById('remuPE').style.display = isPE ? 'block' : 'none';
+      const isSimple = SIMPLE_NAMES.some(s => nom.includes(s));
+      const isStage = nom.includes('stage');
+      // Hide everything for simple entries
+      const hideAll = isSimple;
+      document.querySelectorAll('.etab-section').forEach(s => s.style.display = hideAll ? 'none' : 'block');
+      if (!hideAll) {
+        document.getElementById('remuEtab').style.display = (isPE || isStage) ? 'none' : 'block';
+        document.getElementById('remuPE').style.display = isPE ? 'block' : 'none';
+      }
     };
-    document.getElementById('eNom').addEventListener('input', updateRemuFields);
-    updateRemuFields();
+    document.getElementById('eNom').addEventListener('input', updateFields);
+    updateFields();
 
     // Auto-search address when typing establishment name
     this.setupAddressSearch('eNom', 'eNomSuggestions', (place) => {
@@ -359,14 +374,18 @@ const Etablissements = {
 
       this.searchTimeout = setTimeout(async () => {
         try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=fr&limit=5`, {
-            headers: { 'Accept-Language': 'fr' }
-          });
-          const results = await res.json();
+          // Use French government address API (precise with street numbers)
+          const res = await fetch(`https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(q)}&limit=5`);
+          const data = await res.json();
+          const results = (data.features || []).map(f => ({
+            label: f.properties.label,
+            lat: f.geometry.coordinates[1],
+            lon: f.geometry.coordinates[0]
+          }));
           container.innerHTML = results.map(r => `
-            <div class="suggestion-item" data-lat="${r.lat}" data-lon="${r.lon}" data-name="${r.display_name.replace(/"/g, '&quot;')}">
+            <div class="suggestion-item" data-lat="${r.lat}" data-lon="${r.lon}" data-name="${r.label.replace(/"/g, '&quot;')}">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;flex-shrink:0;color:var(--txt3)"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-              <span>${r.display_name}</span>
+              <span>${r.label}</span>
             </div>
           `).join('');
 

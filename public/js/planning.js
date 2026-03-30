@@ -1,5 +1,70 @@
 const ABSENCE_NAMES = ['timeo', 'timéo', 'hotel', 'hôtel', 'rdv'];
 
+function etabColor(name) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const hue = ((hash % 360) + 360) % 360;
+  return `hsl(${hue}, 65%, 55%)`;
+}
+
+// --- Jours feries francais ---
+function getEasterMonday(year) {
+  // Algorithme de Meeus/Jones/Butcher pour le dimanche de Paques
+  const a = year % 19;
+  const b = Math.floor(year / 100);
+  const c = year % 100;
+  const d = Math.floor(b / 4);
+  const e = b % 4;
+  const f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4);
+  const k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m + 114) / 31);
+  const day = ((h + l - 7 * m + 114) % 31) + 1;
+  // Dimanche de Paques
+  const easter = new Date(year, month - 1, day);
+  // Lundi de Paques = +1
+  easter.setDate(easter.getDate() + 1);
+  return easter;
+}
+
+function getJoursFeries(year) {
+  const feries = {};
+  const pad = (n) => String(n).padStart(2, '0');
+  const fmt = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
+  // Jours fixes
+  feries[`${year}-01-01`] = 'Jour de l\'An';
+  feries[`${year}-05-01`] = 'Fete du Travail';
+  feries[`${year}-05-08`] = 'Victoire 1945';
+  feries[`${year}-07-14`] = 'Fete nationale';
+  feries[`${year}-08-15`] = 'Assomption';
+  feries[`${year}-11-01`] = 'Toussaint';
+  feries[`${year}-11-11`] = 'Armistice';
+  feries[`${year}-12-25`] = 'Noel';
+
+  // Jours mobiles bases sur Paques
+  const easterMonday = getEasterMonday(year);
+  feries[fmt(easterMonday)] = 'Lundi de Paques';
+
+  // Ascension = Paques + 39 jours (depuis le dimanche, donc lundi +38)
+  const ascension = new Date(easterMonday.getTime());
+  ascension.setDate(easterMonday.getDate() + 38);
+  feries[fmt(ascension)] = 'Ascension';
+
+  // Lundi de Pentecote = Paques + 50 jours (depuis le dimanche, donc lundi +49)
+  const pentecote = new Date(easterMonday.getTime());
+  pentecote.setDate(easterMonday.getDate() + 49);
+  feries[fmt(pentecote)] = 'Lundi de Pentecote';
+
+  return feries;
+}
+
 const Planning = {
   missions: [],
   etablissements: [],
@@ -50,6 +115,7 @@ const Planning = {
 
     const page = document.getElementById('page-planning');
     page.innerHTML = `
+      <div id="planningLastUpdated" style="text-align:right;font-size:11px;color:var(--txt3);margin-bottom:4px"></div>
       <div class="print-header" style="display:none">
         <h1>Planning - ${App.getMoisLabel()}</h1>
         <p>Caroline - Missions Hublo</p>
@@ -85,9 +151,22 @@ const Planning = {
         </div>
       </div>
       <div class="calendar-grid" id="calGrid"></div>
+      <div style="text-align:center;padding:20px;font-size:11px;color:var(--txt3)">&copy; Thomas</div>
     `;
     document.getElementById('btnVacances').onclick = () => this.openVacancesModal();
     this.renderCalendar();
+    this.loadLastUpdated();
+  },
+
+  async loadLastUpdated() {
+    try {
+      const log = await API.logs.lastForSection('missions');
+      const el = document.getElementById('planningLastUpdated');
+      if (el && log) {
+        const d = new Date(log.timestamp);
+        el.textContent = `Derniere maj: ${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+      }
+    } catch(e) {}
   },
 
   renderCalendar() {
@@ -99,6 +178,8 @@ const Planning = {
     const lastDay = new Date(year, month + 1, 0);
     const startWeekday = (firstDay.getDay() + 6) % 7; // lundi=0
     const today = new Date();
+
+    const joursFeries = getJoursFeries(year);
 
     const days = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
     let html = days.map(d => `<div class="cal-day-name">${d}</div>`).join('');
@@ -113,6 +194,7 @@ const Planning = {
       const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === day;
       const weekday = (new Date(year, month, day).getDay() + 6) % 7;
       const isWeekend = weekday >= 5;
+      const jourFerie = joursFeries[dateStr] || null;
 
       const hasWork = dayMissions.some(m => !this._isAbsence(m.etablissement));
       const hasAbsence = dayMissions.some(m => this._isAbsence(m.etablissement));
@@ -125,8 +207,12 @@ const Planning = {
       else if (isVacances) cls += ' has-vacances';
       else if (hasAbsence) cls += ' has-absence';
       if (isWeekend) cls += ' day-weekend';
+      if (jourFerie) cls += ' jour-ferie';
 
       let chips = '';
+      if (jourFerie) {
+        chips += `<div class="ferie-label">${jourFerie}</div>`;
+      }
       if (isVacances && !hasWork) {
         chips += dayVacances.map(v => `<div class="mission-chip vacances">${v.motif || 'Vacances'}</div>`).join('');
       }
@@ -136,7 +222,10 @@ const Planning = {
         const isStage = name.toLowerCase().includes('stage');
         const absent = this._isAbsence(name);
         const hours = m.heuresTravaillees && !absent ? `${m.heuresTravaillees.toFixed(1)}h` : '';
-        return `<div class="mission-chip${isStage ? ' stage' : ''}${absent ? ' absence' : ''}" data-id="${m.id}">${short}${hours ? `<span class="chip-hours"> ${hours}</span>` : ''}</div>`;
+        const color = etabColor(name);
+        const borderStyle = !isStage && !absent ? `border-left:3px solid ${color};` : '';
+        const dot = !isStage && !absent ? `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${color};margin-right:3px;flex-shrink:0"></span>` : '';
+        return `<div class="mission-chip${isStage ? ' stage' : ''}${absent ? ' absence' : ''}" data-id="${m.id}" style="${borderStyle}">${dot}${short}${hours ? `<span class="chip-hours"> ${hours}</span>` : ''}</div>`;
       }).join('');
 
       html += `<div class="${cls}" data-date="${dateStr}">
@@ -228,6 +317,15 @@ const Planning = {
           <div class="form-computed" id="mHeures">${mission ? (mission.heuresTravaillees || 0).toFixed(2) + 'h' : '0h'}</div>
         </div>
       </div>
+      <div class="form-group">
+        <label class="form-label">Type de contrat</label>
+        <select class="form-select" id="mContrat">
+          <option value="interim" ${!mission || !mission.typeContrat || mission.typeContrat === 'interim' ? 'selected' : ''}>Interim / Mission Hublo</option>
+          <option value="cdd" ${mission && mission.typeContrat === 'cdd' ? 'selected' : ''}>CDD</option>
+          <option value="cdi" ${mission && mission.typeContrat === 'cdi' ? 'selected' : ''}>CDI</option>
+          <option value="vacation" ${mission && mission.typeContrat === 'vacation' ? 'selected' : ''}>Vacation</option>
+        </select>
+      </div>
     `;
 
     const footer = `
@@ -297,7 +395,8 @@ const Planning = {
         etablissement: etab,
         heureDebut: debut, heureFin: fin,
         pauseDebut: pauseD, pauseFin: pauseF,
-        km, heuresTravaillees: +heures.toFixed(4)
+        km, heuresTravaillees: +heures.toFixed(4),
+        typeContrat: document.getElementById('mContrat').value
       };
 
       if (isEdit) {

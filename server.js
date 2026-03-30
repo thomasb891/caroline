@@ -1,13 +1,40 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+const multer = require('multer');
 const app = express();
 const PORT = 3050;
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+module.exports = app;
 
 const DATA = path.join(__dirname, 'data');
+
+// --- Activity Log Middleware ---
+function logActivity(action, details) {
+  const logsPath = path.join(DATA, 'logs.json');
+  let logs = [];
+  if (fs.existsSync(logsPath)) {
+    try { logs = JSON.parse(fs.readFileSync(logsPath, 'utf8')); } catch(e) { logs = []; }
+  }
+  logs.unshift({ timestamp: new Date().toISOString(), action, details });
+  if (logs.length > 500) logs = logs.slice(0, 500);
+  fs.writeFileSync(logsPath, JSON.stringify(logs, null, 2), 'utf8');
+}
+
+// Log POST/PUT/DELETE requests
+app.use((req, res, next) => {
+  if (['POST', 'PUT', 'DELETE'].includes(req.method) && req.path.startsWith('/api/') && !req.path.includes('/logs')) {
+    const origSend = res.json.bind(res);
+    res.json = (data) => {
+      const section = req.path.split('/')[2] || 'unknown';
+      logActivity(`${req.method} ${req.path}`, { section, body: req.body, params: req.params });
+      return origSend(data);
+    };
+  }
+  next();
+});
 
 function readJSON(file) {
   const p = path.join(DATA, file);
@@ -191,4 +218,72 @@ app.get('/api/stats/annuel', (req, res) => {
   res.json({ annee, moisData, totalKm, totalRevenus, totalSalaires, totalPoleEmploi, fraisKm, config });
 });
 
-app.listen(PORT, () => console.log(`Hublo Gestion running on http://localhost:${PORT}`));
+// --- Document Upload (multer) ---
+const DOCS_ROOT = '\\\\MYCLOUD-1KSKLK\\Serveur\\Caro Hublo\\Documents';
+
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => {
+      const { etablissement, annee, mois } = req.body;
+      const dest = path.join(DOCS_ROOT, etablissement, annee, mois);
+      fs.mkdirSync(dest, { recursive: true });
+      cb(null, dest);
+    },
+    filename: (req, file, cb) => {
+      const ext = path.extname(file.originalname);
+      const base = path.basename(file.originalname, ext).replace(/[^a-zA-Z0-9_-]/g, '_');
+      cb(null, `${base}_${Date.now()}${ext}`);
+    }
+  }),
+  fileFilter: (req, file, cb) => {
+    const allowed = ['.pdf', '.jpg', '.jpeg', '.png', '.gif', '.webp'];
+    const ext = path.extname(file.originalname).toLowerCase();
+    cb(null, allowed.includes(ext));
+  },
+  limits: { fileSize: 20 * 1024 * 1024 } // 20MB
+});
+
+app.post('/api/documents/upload', upload.single('file'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'Fichier manquant ou type non supporte' });
+  res.json({ ok: true, path: req.file.path, filename: req.file.filename });
+});
+
+// --- Comparaison Impots ---
+app.get('/api/comparaison', (req, res) => {
+  const all = readJSON('comparaison.json');
+  const annee = req.query.annee;
+  if (annee) {
+    const entry = all.find(e => e.annee === annee);
+    return res.json(entry || { annee, lignes: [] });
+  }
+  res.json(all);
+});
+
+app.post('/api/comparaison', (req, res) => {
+  let all = readJSON('comparaison.json');
+  if (!Array.isArray(all)) all = [];
+  const i = all.findIndex(e => e.annee === req.body.annee);
+  if (i >= 0) {
+    all[i] = req.body;
+  } else {
+    all.push(req.body);
+  }
+  writeJSON('comparaison.json', all);
+  res.json(req.body);
+});
+
+// --- Logs ---
+app.get('/api/logs', (req, res) => {
+  const logsPath = path.join(DATA, 'logs.json');
+  let logs = [];
+  if (fs.existsSync(logsPath)) {
+    try { logs = JSON.parse(fs.readFileSync(logsPath, 'utf8')); } catch(e) { logs = []; }
+  }
+  const limit = parseInt(req.query.limit) || 100;
+  res.json(logs.slice(0, limit));
+});
+
+// Standalone mode
+if (require.main === module) {
+  app.listen(PORT, () => console.log(`Hublo Gestion running on http://localhost:${PORT}`));
+}

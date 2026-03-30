@@ -269,7 +269,8 @@ td.num { font-variant-numeric: tabular-nums; font-weight: 500; }
 .cal-day.has-mission .day-num { color: var(--green); }
 
 .mission-chip {
-  display: block;
+  display: flex;
+  align-items: center;
   padding: 3px 6px;
   background: var(--green-bg);
   border-radius: 4px;
@@ -290,6 +291,20 @@ td.num { font-variant-numeric: tabular-nums; font-weight: 500; }
 .mission-chip .chip-hours {
   font-size: 9px;
   opacity: 0.8;
+}
+
+/* --- Jours feries --- */
+.cal-day.jour-ferie .day-num { color: #ef4444; }
+.cal-day.jour-ferie { background: rgba(239, 68, 68, 0.04); }
+.ferie-label {
+  font-size: 8px;
+  color: #ef4444;
+  opacity: 0.8;
+  line-height: 1.1;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* --- Etablissement cards --- */
@@ -404,12 +419,28 @@ td.num { font-variant-numeric: tabular-nums; font-weight: 500; }
   .cal-day { min-height: 60px; padding: 4px; }
   .cal-day .day-num { font-size: 11px; }
   .mission-chip { font-size: 9px; padding: 2px 4px; }
+  .ferie-label { font-size: 7px; }
   .impot-grid { grid-template-columns: 1fr; }
   .form-row { grid-template-columns: 1fr; }
   .etab-grid { grid-template-columns: 1fr; }
-  .modal { max-width: 100%; max-height: 100vh; border-radius: var(--radius) var(--radius) 0 0; }
-  .table-wrap { overflow-x: auto; }
+
+  /* Modal fullscreen on mobile */
+  .modal {
+    max-width: 100%;
+    max-height: 100vh;
+    height: 100vh;
+    border-radius: 0;
+    margin: 0;
+  }
+  .modal-overlay { padding: 0; }
+
+  /* Tables horizontal scroll */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   table { min-width: 600px; }
+
+  /* Mobile bottom nav - 5 items fit */
+  .mob-item { padding: 6px 4px; font-size: 9px; min-width: 0; }
+  .mob-item svg { width: 20px; height: 20px; }
 }
 @media (max-width: 380px) {
   .cards-row { grid-template-columns: 1fr; }

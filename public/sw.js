@@ -1,5 +1,5 @@
-const CACHE = 'hublo-v26';
-const ASSETS = ['/', '/css/style.css', '/css/components.css', '/js/api.js', '/js/app.js', '/js/planning.js', '/js/paiements.js', '/js/impots.js', '/js/etablissements.js', '/manifest.json'];
+const CACHE = 'hublo-v30';
+const ASSETS = ['/', '/css/style.css', '/css/components.css', '/js/api.js', '/js/app.js', '/js/planning.js', '/js/paiements.js', '/js/impots.js', '/js/etablissements.js', '/js/documents.js', '/js/stats.js', '/js/comparaison.js', '/js/logs.js', '/js/print.js', '/manifest.json'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));

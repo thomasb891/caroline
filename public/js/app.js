@@ -27,14 +27,17 @@ const App = {
     document.querySelectorAll('.page').forEach(el => {
       el.classList.toggle('active', el.id === `page-${page}`);
     });
-    const titles = { planning: 'Planning', paiements: 'Paiements', documents: 'Documents', impots: 'Impots & Frais KM', parametres: 'Parametres' };
+    const titles = { planning: 'Planning', paiements: 'Paiements', documents: 'Documents', statistiques: 'Statistiques', impots: 'Impots & Frais KM', comparaison: 'Comparaison Impots', logs: 'Journal d\'activite', parametres: 'Parametres' };
     document.getElementById('pageTitle').textContent = titles[page] || page;
     location.hash = page;
 
     if (page === 'planning') Planning.render();
     else if (page === 'paiements') Paiements.render();
     else if (page === 'documents') Documents.render();
+    else if (page === 'statistiques') Stats.render();
     else if (page === 'impots') Impots.render();
+    else if (page === 'comparaison') Comparaison.render();
+    else if (page === 'logs') Logs.render();
     else if (page === 'parametres') Etablissements.render();
 
     // Update topbar actions
@@ -55,6 +58,14 @@ const App = {
       </div>`;
       document.getElementById('prevYearP').onclick = () => { Paiements.currentYear--; Paiements.render(); };
       document.getElementById('nextYearP').onclick = () => { Paiements.currentYear++; Paiements.render(); };
+    } else if (page === 'statistiques') {
+      actions.innerHTML = `<div class="month-selector">
+        <button class="btn-icon" id="prevYearS"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
+        <span class="month-display" id="yearDisplayS"></span>
+        <button class="btn-icon" id="nextYearS"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>
+      </div>`;
+      document.getElementById('prevYearS').onclick = () => { Stats.currentYear--; Stats.render(); };
+      document.getElementById('nextYearS').onclick = () => { Stats.currentYear++; Stats.render(); };
     } else if (page === 'impots') {
       actions.innerHTML = `<div class="month-selector">
         <button class="btn-icon" id="prevYearI"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
@@ -69,8 +80,16 @@ const App = {
         <span class="month-display" id="monthDisplayD"></span>
         <button class="btn-icon" id="nextMonthD"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>
       </div>`;
-      document.getElementById('prevMonthD').onclick = () => { this.currentDate.setMonth(this.currentDate.getMonth() - 1); Documents.render(); };
-      document.getElementById('nextMonthD').onclick = () => { this.currentDate.setMonth(this.currentDate.getMonth() + 1); Documents.render(); };
+      document.getElementById('prevMonthD').onclick = () => {
+        if (Documents.viewMode === 'year') { Documents.currentYear--; }
+        else { this.currentDate.setMonth(this.currentDate.getMonth() - 1); }
+        Documents.render();
+      };
+      document.getElementById('nextMonthD').onclick = () => {
+        if (Documents.viewMode === 'year') { Documents.currentYear++; }
+        else { this.currentDate.setMonth(this.currentDate.getMonth() + 1); }
+        Documents.render();
+      };
     } else {
       actions.innerHTML = '';
     }

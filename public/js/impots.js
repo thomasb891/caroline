@@ -47,6 +47,10 @@ const Impots = {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4"/></svg>
           Bareme KM
         </button>
+        <button class="btn btn-sm btn-primary" id="goComparaison">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M16 3h5v5"/><path d="M8 3H3v5"/><path d="M21 3l-7 7"/><path d="M3 3l7 7"/><path d="M16 21h5v-5"/><path d="M8 21H3v-5"/><path d="M21 21l-7-7"/><path d="M3 21l7-7"/></svg>
+          Comparer avec fiche impots
+        </button>
         </div>
       </div>
 
@@ -129,9 +133,14 @@ const Impots = {
           </div>
         </div>
       </div>
+      <div style="text-align:center;padding:20px;font-size:11px;color:var(--txt3)">&copy; Thomas</div>
     `;
 
     document.getElementById('editBareme').onclick = () => this.openBaremeModal(stats.config);
+    document.getElementById('goComparaison').onclick = () => {
+      Comparaison.currentYear = this.currentYear;
+      App.navigate('comparaison');
+    };
   },
 
   buildVerifRows(paiements, etablissements) {
