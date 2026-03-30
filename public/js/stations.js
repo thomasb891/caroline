@@ -58,7 +58,7 @@ const Stations = {
     for (const [zone, info] of Object.entries(allTrajets)) {
       const etabsInZone = recentEtabs.filter(e => info.keywords.some(k => e.toLowerCase().includes(k.toLowerCase())));
       if (etabsInZone.length > 0) {
-        trajets['Trajet ' + zone] = { desc: etabsInZone.map(e => e.replace(/\s*\(.*\)/, '').trim().split(' ').slice(0,3).join(' ')).join(', '), villes: info.villes };
+        trajets[etabsInZone.map(e => e.replace(/\s*\(.*\)/, '').trim().split(' ').slice(0,3).join(' ')).join(', ')] = { desc: '', villes: info.villes };
       }
     }
 
@@ -74,7 +74,7 @@ const Stations = {
               <div style="display:flex;justify-content:space-between;align-items:start">
                 <div>
                   <div style="font-size:15px;font-weight:700">${trajet}</div>
-                  <div style="font-size:11px;color:var(--txt3);margin-bottom:8px">${info.desc}</div>
+                  ${info.desc ? '<div style="font-size:11px;color:var(--txt3);margin-bottom:8px">' + info.desc + '</div>' : ''}
                   <div style="font-size:13px">
                     <svg viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" style="width:14px;height:14px;vertical-align:middle"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                     ${best.nom ? '<strong>' + best.nom + '</strong> - ' : ''}${best.adresse}, ${best.ville}
