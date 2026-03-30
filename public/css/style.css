@@ -159,16 +159,7 @@ body {
 .mob-item svg { width: 22px; height: 22px; }
 .mob-item.active { color: var(--accent2); }
 
-@media (max-width: 768px) {
-  .sidebar { transform: translateX(-100%); }
-  .sidebar.open { transform: translateX(0); }
-  .main { margin-left: 0; }
-  .mobile-nav { display: flex; }
-  .menu-btn { display: block; }
-  .page { padding: 12px 10px 80px; }
-  .topbar { padding: 0 10px; gap: 8px; height: 52px; }
-  .page-title { font-size: 15px; }
-}
+/* Mobile responsive -> voir mobile.css */
 
 /* --- Scrollbar --- */
 ::-webkit-scrollbar { width: 6px; }
