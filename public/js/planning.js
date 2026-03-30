@@ -325,23 +325,14 @@ const Planning = {
           <div class="form-computed" id="mHeures">${mission ? (mission.heuresTravaillees || 0).toFixed(2) + 'h' : '0h'}</div>
         </div>
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Type de contrat</label>
-          <select class="form-select" id="mContrat">
-            <option value="interim" ${!mission || !mission.typeContrat || mission.typeContrat === 'interim' ? 'selected' : ''}>Interim / Mission Hublo</option>
-            <option value="cdd" ${mission && mission.typeContrat === 'cdd' ? 'selected' : ''}>CDD</option>
-            <option value="cdi" ${mission && mission.typeContrat === 'cdi' ? 'selected' : ''}>CDI</option>
-            <option value="vacation" ${mission && mission.typeContrat === 'vacation' ? 'selected' : ''}>Vacation</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Horaire</label>
-          <select class="form-select" id="mHoraire">
-            <option value="jour" ${!mission || !mission.horaire || mission.horaire === 'jour' ? 'selected' : ''}>Jour</option>
-            <option value="nuit" ${mission && mission.horaire === 'nuit' ? 'selected' : ''}>Nuit</option>
-          </select>
-        </div>
+      <div class="form-group">
+        <label class="form-label">Type de contrat</label>
+        <select class="form-select" id="mContrat">
+          <option value="interim" ${!mission || !mission.typeContrat || mission.typeContrat === 'interim' ? 'selected' : ''}>Interim / Mission Hublo</option>
+          <option value="cdd" ${mission && mission.typeContrat === 'cdd' ? 'selected' : ''}>CDD</option>
+          <option value="cdi" ${mission && mission.typeContrat === 'cdi' ? 'selected' : ''}>CDI</option>
+          <option value="vacation" ${mission && mission.typeContrat === 'vacation' ? 'selected' : ''}>Vacation</option>
+        </select>
       </div>
     `;
 
@@ -414,7 +405,10 @@ const Planning = {
         pauseDebut: pauseD, pauseFin: pauseF,
         km, heuresTravaillees: +heures.toFixed(4),
         typeContrat: document.getElementById('mContrat').value,
-        horaire: document.getElementById('mHoraire').value
+        horaire: (() => {
+          const h = parseInt((debut || '00:00').split(':')[0]);
+          return (h >= 19 || h < 7) ? 'nuit' : 'jour';
+        })()
       };
 
       if (isEdit) {
