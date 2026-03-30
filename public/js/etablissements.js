@@ -111,7 +111,35 @@ const Etablissements = {
     };
   },
 
-  renderVehicule(config) {
+  async renderVehicule(config) {
+    // Fetch stations proches
+    let stationsHTML = '';
+    try {
+      const data = await API.get('/api/prix-gasoil/stations');
+      if (data.stations && data.stations.length) {
+        const rows = data.stations.map((s, i) => `
+          <tr${i === 0 ? ' style="font-weight:600;color:var(--green)"' : ''}>
+            <td style="font-size:12px">${s.adresse}, ${s.ville}</td>
+            <td class="num" style="font-size:13px;font-weight:600">${s.prix} &euro;/L</td>
+          </tr>
+        `).join('');
+        const maj = data.maj ? new Date(data.maj).toLocaleDateString('fr-FR') + ' ' + new Date(data.maj).toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'}) : '';
+        stationsHTML = `
+          <div style="margin-top:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+              <div class="label">STATIONS LES MOINS CHERES (Saintes/Royan/Saujon)</div>
+              <button class="btn btn-sm btn-ghost" id="refreshPrix" style="font-size:10px">Actualiser</button>
+            </div>
+            <div class="table-wrap"><table>
+              <thead><tr><th>Station</th><th style="text-align:right">Prix Gazole</th></tr></thead>
+              <tbody>${rows}</tbody>
+            </table></div>
+            <div style="font-size:10px;color:var(--txt3);margin-top:4px">MAJ: ${maj} - Source: prix-carburants.gouv.fr</div>
+          </div>
+        `;
+      }
+    } catch(e) {}
+
     document.getElementById('vehiculeSection').innerHTML = `
       <div class="stat-card" style="max-width:400px;cursor:pointer" id="editVehicule">
         <div style="display:flex;justify-content:space-between;align-items:start">
@@ -125,8 +153,19 @@ const Etablissements = {
           </div>
         </div>
       </div>
+      ${stationsHTML}
     `;
     document.getElementById('editVehicule').onclick = () => Impots.openBaremeModal(config);
+    const refreshBtn = document.getElementById('refreshPrix');
+    if (refreshBtn) {
+      refreshBtn.onclick = async (e) => {
+        e.stopPropagation();
+        refreshBtn.textContent = 'Chargement...';
+        await API.post('/api/prix-gasoil/refresh', {});
+        App.toast('Prix mis a jour');
+        this.renderVehicule(config);
+      };
+    }
   },
 
   openDomicileModal(config) {

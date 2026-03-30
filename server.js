@@ -516,6 +516,87 @@ app.post('/api/logs/purge', (req, res) => {
   res.json({ ok: true });
 });
 
+// --- Prix gasoil automatique (API gouvernementale) ---
+const https = require('https');
+
+function fetchJSON(url) {
+  return new Promise((resolve, reject) => {
+    https.get(url, { headers: { 'User-Agent': 'HubloGestion/1.0' } }, res => {
+      let data = '';
+      res.on('data', c => data += c);
+      res.on('end', () => { try { resolve(JSON.parse(data)); } catch(e) { reject(e); } });
+    }).on('error', reject);
+  });
+}
+
+async function updatePrixGasoil() {
+  try {
+    const configPath = path.join(DATA, 'config.json');
+    const config = fs.existsSync(configPath) ? JSON.parse(fs.readFileSync(configPath, 'utf8')) : {};
+    const lat = config.domicileLat || 45.6307;
+    const lon = config.domicileLon || -0.6523;
+
+    // Chercher dans un rayon de 50km pour couvrir Saintes, Royan et Saujon
+    const url = `https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/prix-des-carburants-en-france-flux-instantane-v2/records?limit=15&refine=carburants_disponibles%3AGazole&where=distance(geom%2C%20geom'POINT(${lon}%20${lat})'%2C%2050km)%20and%20gazole_prix%20is%20not%20null&select=id%2Cadresse%2Cville%2Cgazole_prix%2Cgazole_maj&order_by=gazole_prix%20asc`;
+
+    const data = await fetchJSON(url);
+    if (!data.results || !data.results.length) return;
+
+    const stations = data.results.map(s => ({
+      prix: s.gazole_prix,
+      adresse: s.adresse,
+      ville: s.ville,
+      maj: s.gazole_maj
+    }));
+
+    const moinsChere = stations[0];
+    console.log(`[Prix Gasoil] Le moins cher: ${moinsChere.prix} EUR/L - ${moinsChere.adresse}, ${moinsChere.ville}`);
+
+    // Sauvegarder le prix le moins cher
+    config.prixGasoil = moinsChere.prix;
+    config.prixGasoilStation = `${moinsChere.adresse}, ${moinsChere.ville}`;
+    config.prixGasoilMaj = new Date().toISOString();
+    config.stationsProches = stations.slice(0, 5);
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+
+    // Aussi sauvegarder dans l'historique du mois
+    const now = new Date();
+    const moisKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    let prixList = readJSON('prix-gasoil.json');
+    if (!Array.isArray(prixList)) prixList = [];
+    const i = prixList.findIndex(p => p.mois === moisKey);
+    if (i >= 0) prixList[i].prix = moinsChere.prix;
+    else prixList.push({ mois: moisKey, prix: moinsChere.prix });
+    writeJSON('prix-gasoil.json', prixList);
+  } catch (e) {
+    console.log('[Prix Gasoil] Erreur:', e.message);
+  }
+}
+
+app.get('/api/prix-gasoil/stations', async (req, res) => {
+  try {
+    const config = JSON.parse(fs.readFileSync(path.join(DATA, 'config.json'), 'utf8'));
+    res.json({
+      prix: config.prixGasoil,
+      station: config.prixGasoilStation,
+      maj: config.prixGasoilMaj,
+      stations: config.stationsProches || []
+    });
+  } catch (e) {
+    res.json({ prix: null, stations: [] });
+  }
+});
+
+app.post('/api/prix-gasoil/refresh', async (req, res) => {
+  await updatePrixGasoil();
+  const config = JSON.parse(fs.readFileSync(path.join(DATA, 'config.json'), 'utf8'));
+  res.json({
+    prix: config.prixGasoil,
+    station: config.prixGasoilStation,
+    stations: config.stationsProches || []
+  });
+});
+
 // --- Backup automatique sur NAS chaque nuit ---
 const NAS_BACKUP = '\\\\MYCLOUD-1KSKLK\\Serveur\\Caro Hublo\\Backups';
 
@@ -595,6 +676,8 @@ if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`Hublo Gestion running on http://localhost:${PORT}`);
     scheduleBackup();
-    doBackup(); // backup au demarrage aussi
+    doBackup();
+    updatePrixGasoil();
+    setInterval(updatePrixGasoil, 6 * 60 * 60 * 1000); // MAJ prix toutes les 6h
   });
 }
