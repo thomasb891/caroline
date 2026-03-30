@@ -542,12 +542,16 @@ async function updatePrixGasoil() {
     const data = await fetchJSON(url);
     if (!data.results || !data.results.length) return;
 
-    const stations = data.results.map(s => ({
-      prix: s.gazole_prix,
-      adresse: s.adresse,
-      ville: s.ville,
-      maj: s.gazole_maj
-    }));
+    // Filtrer les stations dont la MAJ est de moins de 7 jours
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const stations = data.results
+      .filter(s => s.gazole_maj && s.gazole_maj > sevenDaysAgo)
+      .map(s => ({
+        prix: s.gazole_prix,
+        adresse: s.adresse,
+        ville: s.ville,
+        maj: s.gazole_maj
+      }));
 
     const moinsChere = stations[0];
     console.log(`[Prix Gasoil] Le moins cher: ${moinsChere.prix} EUR/L - ${moinsChere.adresse}, ${moinsChere.ville}`);
