@@ -102,18 +102,21 @@ const Planning = {
     let salaireBase = 0;
     let totalIFC = 0;
     let totalCP = 0;
-    let totalPrimeNuit = 0;
+    let totalPrimes = 0;
     workMissions.forEach(m => {
       const e = etabMap[m.etablissement];
       const taux = e && e.tauxHoraire ? e.tauxHoraire : 0;
       const hDebut = parseInt((m.heureDebut || '08:00').split(':')[0]);
       const estNuit = m.horaire === 'nuit' || (hDebut >= 21 || hDebut < 6);
       const primeNuit = (estNuit && e && e.primeNuit) ? e.primeNuit : 0;
+      // Dimanche : detecte par le jour de la semaine
+      const estDim = m.date ? new Date(m.date + 'T00:00:00').getDay() === 0 : false;
+      const primeDim = (estDim && e && e.primeDimanche) ? e.primeDimanche : 0;
       const ifcPct = e && e.ifc ? e.ifc : 0;
       const cpPct = e && e.cp ? e.cp : 0;
       const heures = m.heuresTravaillees || 0;
-      const base = heures * taux + heures * primeNuit;
-      totalPrimeNuit += heures * primeNuit;
+      const base = heures * taux + heures * primeNuit + heures * primeDim;
+      totalPrimes += heures * primeNuit + heures * primeDim;
       const ifc = base * ifcPct / 100;
       const cp = (base + ifc) * cpPct / 100;
       salaireBase += base;
@@ -155,7 +158,7 @@ const Planning = {
         <div class="stat-card green">
           <div class="label">Estimation salaire</div>
           <div class="value">${estimTotal.toFixed(2)} &euro;</div>
-          <div class="sub">Base ${salaireBase.toFixed(0)}&euro;${totalPrimeNuit > 0 ? ' (dont nuit ' + totalPrimeNuit.toFixed(0) + '&euro;)' : ''} + IFC ${totalIFC.toFixed(0)}&euro; + CP ${totalCP.toFixed(0)}&euro;</div>
+          <div class="sub">Base ${salaireBase.toFixed(0)}&euro;${totalPrimes > 0 ? ' (dont primes ' + totalPrimes.toFixed(0) + '&euro;)' : ''} + IFC ${totalIFC.toFixed(0)}&euro; + CP ${totalCP.toFixed(0)}&euro;</div>
         </div>
         <div class="stat-card orange">
           <div class="label">Kilometres</div>

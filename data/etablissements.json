@@ -29,12 +29,13 @@
     "receptionDocs": "",
     "siteUrl": "",
     "typeContrat": "cdd",
-    "tauxHoraire": 10.3,
+    "tauxHoraire": 9.85,
     "allocationARE": 0,
     "ifc": 10,
     "cp": 10,
     "kmCalcule": 75.8,
-    "primeNuit": 1
+    "primeNuit": 1,
+    "primeDimanche": 4.3
   },
   {
     "id": "mnd0jco4y1hwy",
