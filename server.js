@@ -29,7 +29,10 @@ if (fs.existsSync(potagerDir)) {
   process.on('exit', () => { try { potager.kill(); } catch {} });
 
   // Redirect /potager to /potager/ for correct relative paths
-  app.get('/potager', (req, res) => res.redirect('/potager/'));
+  app.get('/potager', (req, res, next) => {
+    if (req.originalUrl === '/potager') return res.redirect(301, '/potager/');
+    next();
+  });
   app.use('/potager', createProxyMiddleware({
     target: `http://127.0.0.1:${POTAGER_PORT}`,
     changeOrigin: true,
