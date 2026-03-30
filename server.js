@@ -544,14 +544,26 @@ async function updatePrixGasoil() {
 
     // Filtrer les stations dont la MAJ est de moins de 7 jours
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-    const stations = data.results
-      .filter(s => s.gazole_maj && s.gazole_maj > sevenDaysAgo)
-      .map(s => ({
-        prix: s.gazole_prix,
-        adresse: s.adresse,
-        ville: s.ville,
-        maj: s.gazole_maj
-      }));
+    const stationsRaw = data.results
+      .filter(s => s.gazole_maj && s.gazole_maj > sevenDaysAgo);
+
+    // Recuperer les noms des stations depuis prix-carburants.gouv.fr
+    const stations = [];
+    for (const s of stationsRaw.slice(0, 10)) {
+      let nom = '';
+      try {
+        const html = await new Promise((resolve, reject) => {
+          const req = https.get(`https://www.prix-carburants.gouv.fr/map/recuperer_infos_pdv/${s.id}`, { headers: { 'User-Agent': 'HubloGestion/1.0' } }, res => {
+            let d = ''; res.on('data', c => d += c); res.on('end', () => resolve(d));
+          });
+          req.on('error', reject);
+          setTimeout(() => req.destroy(), 3000);
+        });
+        const match = html.match(/<strong>([^<]+)<\/strong>/);
+        if (match) nom = match[1].trim();
+      } catch(e) {}
+      stations.push({ prix: s.gazole_prix, adresse: s.adresse, ville: s.ville, maj: s.gazole_maj, nom });
+    }
 
     // Aussi grouper par zone (ville) pour conseiller selon le trajet
     const zones = {};

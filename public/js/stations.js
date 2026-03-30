@@ -63,7 +63,7 @@ const Stations = {
                   <div style="font-size:11px;color:var(--txt3);margin-bottom:8px">${info.desc}</div>
                   <div style="font-size:13px">
                     <svg viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" style="width:14px;height:14px;vertical-align:middle"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                    ${best.adresse}, ${best.ville}
+                    ${best.nom ? '<strong>' + best.nom + '</strong> - ' : ''}${best.adresse}, ${best.ville}
                   </div>
                 </div>
                 <div style="text-align:right">
@@ -72,7 +72,7 @@ const Stations = {
                 </div>
               </div>
               ${others.length ? `<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
-                ${others.map(s => `<div style="font-size:11px;color:var(--txt2);padding:2px 0">${s.prix} &euro;/L - ${s.adresse}, ${s.ville}</div>`).join('')}
+                ${others.map(s => `<div style="font-size:11px;color:var(--txt2);padding:2px 0">${s.prix} &euro;/L - ${s.nom ? s.nom + ' - ' : ''}${s.adresse}, ${s.ville}</div>`).join('')}
               </div>` : ''}
             </div>
           `;
@@ -85,8 +85,8 @@ const Stations = {
     if (data.stations) {
       allRows = data.stations.map((s, i) => `
         <tr${i === 0 ? ' style="color:var(--green);font-weight:600"' : ''}>
-          <td style="font-size:12px">${s.ville}</td>
-          <td style="font-size:12px">${s.adresse}</td>
+          <td style="font-size:12px">${s.nom || '-'}</td>
+          <td style="font-size:12px">${s.adresse}, ${s.ville}</td>
           <td class="num" style="font-size:13px;font-weight:600">${s.prix} &euro;/L</td>
           <td style="font-size:10px;color:var(--txt3)">${s.maj ? new Date(s.maj).toLocaleDateString('fr-FR') : ''}</td>
         </tr>
@@ -154,7 +154,7 @@ const Stations = {
         <h2 class="section-title">Toutes les stations (50km)</h2>
       </div>
       <div class="table-wrap"><table>
-        <thead><tr><th>Ville</th><th>Station</th><th style="text-align:right">Gazole</th><th>MAJ</th></tr></thead>
+        <thead><tr><th>Enseigne</th><th>Adresse</th><th style="text-align:right">Gazole</th><th>MAJ</th></tr></thead>
         <tbody>${allRows}</tbody>
       </table></div>
       <div style="text-align:center;padding:20px;font-size:11px;color:var(--txt3)">&copy; Thomas</div>
