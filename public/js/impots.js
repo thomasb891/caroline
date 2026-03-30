@@ -24,12 +24,22 @@ const Impots = {
     const puissance = stats.config.puissanceFiscale;
 
     page.innerHTML = `
+      <div class="print-header" style="display:none">
+        <h1>Impots & Frais KM - ${annee}</h1>
+        <p>Caroline - Declaration annuelle</p>
+      </div>
       <div class="section-header" style="margin-bottom:20px">
         <h2 class="section-title">Declaration ${annee}</h2>
+        <div style="display:flex;gap:8px">
+        <button class="btn-print" onclick="window.print()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          Imprimer
+        </button>
         <button class="btn btn-sm btn-secondary" id="editBareme">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4"/></svg>
           Bareme KM
         </button>
+        </div>
       </div>
 
       <div class="impot-grid">
