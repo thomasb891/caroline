@@ -144,7 +144,11 @@ const Planning = {
         <h1>Planning - ${App.getMoisLabel()}</h1>
         <p>Caroline - Missions Hublo</p>
       </div>
-      <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px">
+      <div style="display:flex;justify-content:flex-end;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+        <button class="btn-print" id="btnCompact" title="Reduire/Agrandir le calendrier">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
+          Reduire
+        </button>
         <button class="btn-print" id="btnVacances">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
           Vacances
