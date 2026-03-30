@@ -91,7 +91,7 @@ const Impots = {
             </div>
             <div>
               <div style="font-size:12px;color:var(--txt3);margin-bottom:4px">FRAIS KM DEDUCTIBLES</div>
-              <div style="font-size:24px;font-weight:700;color:var(--orange)">- ${stats.fraisKm.toFixed(2)} &euro;</div>
+              <div style="font-size:24px;font-weight:700;color:var(--orange)">${stats.fraisKm.toFixed(2)} &euro;</div>
             </div>
             <div>
               <div style="font-size:12px;color:var(--txt3);margin-bottom:4px">NET IMPOSABLE</div>

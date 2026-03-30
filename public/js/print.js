@@ -162,12 +162,12 @@ ${content}
         <h1>Planning - ${moisLabel.charAt(0).toUpperCase() + moisLabel.slice(1)}</h1>
         <p>Caroline${isTiers ? '' : ' - Missions Hublo'}</p>
       </div>
-      <div class="stats-bar">
+      ${isTiers ? '' : `<div class="stats-bar">
         <div class="stat"><div class="stat-label">Missions</div><div class="stat-val">${workMissions.length}</div></div>
         <div class="stat"><div class="stat-label">Heures</div><div class="stat-val">${totalH.toFixed(1)}h</div></div>
         <div class="stat"><div class="stat-label">Kilometres</div><div class="stat-val">${totalKm.toFixed(0)} km</div></div>
         <div class="stat"><div class="stat-label">Jours travailles</div><div class="stat-val">${uniqueDays}</div></div>
-      </div>
+      </div>`}
       <table class="cal-table">
         <thead><tr><th>Lundi</th><th>Mardi</th><th>Mercredi</th><th>Jeudi</th><th>Vendredi</th><th>Samedi</th><th>Dimanche</th></tr></thead>
         <tbody>${calRows}</tbody>
@@ -263,7 +263,7 @@ ${content}
       <div class="resume-box">
         <h3>Resume pour la declaration d'impots ${annee}</h3>
         <div class="resume-row"><span class="resume-label">Revenus nets percus</span><span class="resume-val">${stats.totalRevenus.toFixed(2)} &euro;</span></div>
-        <div class="resume-row"><span class="resume-label">Frais kilometriques deductibles</span><span class="resume-val">- ${fraisKm.toFixed(2)} &euro;</span></div>
+        <div class="resume-row"><span class="resume-label">Frais kilometriques deductibles</span><span class="resume-val">${fraisKm.toFixed(2)} &euro;</span></div>
         <div class="resume-row total"><span class="resume-label">Net imposable</span><span class="resume-val">${netImposable.toFixed(2)} &euro;</span></div>
       </div>
 
