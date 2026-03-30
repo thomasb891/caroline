@@ -271,7 +271,17 @@ const Documents = {
           <select class="form-select" id="ulMois">${moisOptions}</select>
         </div>
       </div>
-      <div class="form-group">
+      <div style="border-top:1px solid var(--border);margin:12px 0;padding-top:12px">
+        <div style="font-size:12px;font-weight:600;color:var(--txt2);margin-bottom:8px">TYPE DE DOCUMENT</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <label class="form-check"><input type="checkbox" id="ulFichePaye"> Fiche de paie</label>
+          <label class="form-check"><input type="checkbox" id="ulContrat"> Contrat de travail</label>
+          <label class="form-check"><input type="checkbox" id="ulFinContrat"> Certificat fin contrat</label>
+          <label class="form-check"><input type="checkbox" id="ulAttestation"> Attestation employeur</label>
+          <label class="form-check"><input type="checkbox" id="ulSolde"> Solde de tout compte</label>
+        </div>
+      </div>
+      <div class="form-group" style="margin-top:12px">
         <label class="form-label">Fichier (PDF ou image)</label>
         <input type="file" class="form-input" id="ulFile" accept=".pdf,.jpg,.jpeg,.png,.gif,.webp" style="padding:8px">
       </div>
@@ -318,10 +328,24 @@ const Documents = {
         document.getElementById('ulProgressBar').style.width = '100%';
 
         if (result.ok) {
+          // Update document tracking
+          const moisKey = `${annee}-${mois}`;
+          const docUpdate = { mois: moisKey, etablissement: etab };
+          if (document.getElementById('ulFichePaye').checked) docUpdate.fichePaye = true;
+          if (document.getElementById('ulContrat').checked) docUpdate.contrat = true;
+          if (document.getElementById('ulFinContrat').checked) docUpdate.finContrat = true;
+          if (document.getElementById('ulAttestation').checked) docUpdate.attestation = true;
+          if (document.getElementById('ulSolde').checked) docUpdate.solde = true;
+          // Only update if at least one checkbox
+          if (Object.keys(docUpdate).length > 2) {
+            await API.documents.save(docUpdate);
+          }
+
           document.getElementById('ulProgressText').textContent = 'Termine !';
           document.getElementById('ulSuccess').style.display = 'block';
           document.getElementById('ulProgress').style.display = 'none';
-          App.toast('Document envoye');
+          App.toast('Document envoye et suivi mis a jour');
+          this.render();
         } else {
           App.toast(result.error || 'Erreur lors de l\'envoi', 'error');
           document.getElementById('ulProgress').style.display = 'none';
