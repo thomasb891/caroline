@@ -17,6 +17,10 @@ const Planning = {
     const totalH = missions.reduce((s, m) => s + (m.heuresTravaillees || 0), 0);
     const totalKm = missions.reduce((s, m) => s + (m.km || 0), 0);
 
+    // Estimation salaire : utilise le taux horaire net stocke dans les missions
+    const salaireNet = missions.length > 0 ? (missions[0].salaireNet || 0) : 0;
+    const estimSalaire = totalH * salaireNet;
+
     const page = document.getElementById('page-planning');
     page.innerHTML = `
       <div class="cards-row">
@@ -29,6 +33,11 @@ const Planning = {
           <div class="value">${totalH.toFixed(1)}h</div>
         </div>
         <div class="stat-card green">
+          <div class="label">Estimation salaire</div>
+          <div class="value">${estimSalaire.toFixed(2)} &euro;</div>
+          <div class="sub">${salaireNet.toFixed(2)} &euro;/h net x ${totalH.toFixed(1)}h</div>
+        </div>
+        <div class="stat-card orange">
           <div class="label">Kilometres</div>
           <div class="value">${totalKm.toFixed(0)}</div>
           <div class="sub">km parcourus</div>

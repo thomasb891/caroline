@@ -48,12 +48,12 @@ const App = {
       document.getElementById('nextMonth').onclick = () => { this.currentDate.setMonth(this.currentDate.getMonth() + 1); Planning.render(); };
     } else if (page === 'paiements') {
       actions.innerHTML = `<div class="month-selector">
-        <button class="btn-icon" id="prevMonthP"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
+        <button class="btn-icon" id="prevYearP"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
         <span class="month-display" id="monthDisplayP"></span>
-        <button class="btn-icon" id="nextMonthP"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>
+        <button class="btn-icon" id="nextYearP"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>
       </div>`;
-      document.getElementById('prevMonthP').onclick = () => { this.currentDate.setMonth(this.currentDate.getMonth() - 1); Paiements.render(); };
-      document.getElementById('nextMonthP').onclick = () => { this.currentDate.setMonth(this.currentDate.getMonth() + 1); Paiements.render(); };
+      document.getElementById('prevYearP').onclick = () => { Paiements.currentYear--; Paiements.render(); };
+      document.getElementById('nextYearP').onclick = () => { Paiements.currentYear++; Paiements.render(); };
     } else {
       actions.innerHTML = '';
     }

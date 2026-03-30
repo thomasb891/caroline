@@ -1,4 +1,7 @@
 {
   "puissanceFiscale": 4,
-  "baremeKm": 0.523
+  "baremeKm": 0.523,
+  "domicile": "12, Rue Jules Ferry, Les Petites Combes, Chez Sorignet, Tesson, Saintes, Charente-Maritime, Nouvelle-Aquitaine, France métropolitaine, 17460, France",
+  "domicileLat": 45.630738,
+  "domicileLon": -0.652319
 }

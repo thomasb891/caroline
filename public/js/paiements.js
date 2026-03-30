@@ -1,13 +1,11 @@
 const Paiements = {
   paiements: [],
   etablissements: [],
-  viewMode: 'mois',
+  currentYear: new Date().getFullYear(),
 
   async render() {
-    const moisKey = App.getMoisKey();
-    const annee = App.currentDate.getFullYear().toString();
-    const [paiements, paiementsAnnee, etabs] = await Promise.all([
-      API.paiements.list(moisKey),
+    const annee = this.currentYear.toString();
+    const [paiements, etabs] = await Promise.all([
       API.paiements.listAnnee(annee),
       API.etablissements.list()
     ]);
@@ -15,22 +13,56 @@ const Paiements = {
     this.etablissements = etabs;
 
     const display = document.getElementById('monthDisplayP');
-    if (display) display.textContent = App.getMoisLabel();
+    if (display) display.textContent = annee;
 
-    const totalMois = paiements.reduce((s, p) => s + (p.montant || 0), 0);
-    const totalAnnee = paiementsAnnee.reduce((s, p) => s + (p.montant || 0), 0);
+    const totalAnnee = paiements.reduce((s, p) => s + (p.montant || 0), 0);
     const enAttente = paiements.filter(p => !p.fichePaye).length;
+    const nbFiches = paiements.filter(p => p.fichePaye).length;
+
+    const moisNoms = ['Janvier', 'Fevrier', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Aout', 'Septembre', 'Octobre', 'Novembre', 'Decembre'];
+
+    // Build month rows with expandable detail
+    let total = 0;
+    const rows = moisNoms.map((nom, i) => {
+      const key = `${annee}-${String(i + 1).padStart(2, '0')}`;
+      const moisP = paiements.filter(p => p.dateVersement && p.dateVersement.startsWith(key));
+      const montant = moisP.reduce((s, p) => s + (p.montant || 0), 0);
+      total += montant;
+
+      let detailRows = '';
+      if (moisP.length > 0) {
+        detailRows = moisP.map(p => `<tr class="detail-row" data-month="${key}" style="display:none">
+          <td style="padding-left:36px;font-size:12px;color:var(--txt2)">${p.dateVersement}</td>
+          <td style="font-size:12px">${p.etablissement}</td>
+          <td class="num" style="font-size:12px">${(p.montant || 0).toFixed(2)} &euro;</td>
+          <td>${p.fichePaye ? '<span class="badge badge-green">Oui</span>' : '<span class="badge badge-orange">Non</span>'}</td>
+          <td>${p.finContrat ? '<span class="badge badge-blue">Oui</span>' : '-'}</td>
+          <td><button class="btn-ghost btn-sm" data-edit="${p.id}">Modifier</button></td>
+        </tr>`).join('');
+      }
+
+      return `<tr class="month-row" data-toggle="${key}" style="cursor:pointer">
+        <td style="font-weight:600">${moisP.length > 0 ? '<span class="toggle-icon" style="display:inline-block;width:16px;transition:transform 0.2s">&#9654;</span> ' : '<span style="display:inline-block;width:16px"></span> '}${nom}</td>
+        <td class="num">${moisP.length}</td>
+        <td class="num" style="font-weight:600">${montant > 0 ? montant.toFixed(2) + ' &euro;' : '-'}</td>
+        <td class="num">${moisP.filter(p => p.fichePaye).length} / ${moisP.length}</td>
+        <td>${moisP.some(p => p.finContrat) ? '<span class="badge badge-blue">Oui</span>' : ''}</td>
+        <td></td>
+      </tr>${detailRows}`;
+    }).join('');
 
     const page = document.getElementById('page-paiements');
     page.innerHTML = `
       <div class="cards-row">
         <div class="stat-card green">
-          <div class="label">Total du mois</div>
-          <div class="value">${totalMois.toFixed(2)} &euro;</div>
+          <div class="label">Total ${annee}</div>
+          <div class="value">${totalAnnee.toFixed(2)} &euro;</div>
+          <div class="sub">${paiements.length} virements</div>
         </div>
         <div class="stat-card blue">
-          <div class="label">Total annuel</div>
-          <div class="value">${totalAnnee.toFixed(2)} &euro;</div>
+          <div class="label">Fiches de paie</div>
+          <div class="value">${nbFiches} / ${paiements.length}</div>
+          <div class="sub">recues</div>
         </div>
         <div class="stat-card orange">
           <div class="label">En attente</div>
@@ -40,83 +72,44 @@ const Paiements = {
       </div>
 
       <div class="section-header">
-        <div style="display:flex;gap:8px;align-items:center">
-          <h2 class="section-title">Virements du mois</h2>
-          <button class="btn btn-sm btn-secondary" id="toggleViewPaie">${this.viewMode === 'mois' ? 'Voir annuel' : 'Voir mensuel'}</button>
-        </div>
+        <h2 class="section-title">Virements ${annee}</h2>
         <button class="btn btn-sm btn-primary" id="addPaiement">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Ajouter
         </button>
       </div>
 
-      <div id="paiementContent"></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Mois</th><th>Virements</th><th>Montant</th><th>Fiches</th><th>Fin contrat</th><th></th></tr></thead>
+        <tbody>${rows}
+        <tr style="font-weight:700;border-top:2px solid var(--border)">
+          <td>Total ${annee}</td><td class="num">${paiements.length}</td><td class="num">${total.toFixed(2)} &euro;</td><td class="num">${nbFiches} / ${paiements.length}</td><td></td><td></td>
+        </tr></tbody>
+      </table></div>
     `;
 
-    document.getElementById('addPaiement').onclick = () => this.openPaiementModal();
-    document.getElementById('toggleViewPaie').onclick = () => {
-      this.viewMode = this.viewMode === 'mois' ? 'annuel' : 'mois';
-      this.render();
-    };
+    // Expand/collapse months
+    page.querySelectorAll('.month-row').forEach(row => {
+      row.onclick = () => {
+        const key = row.dataset.toggle;
+        const details = page.querySelectorAll(`.detail-row[data-month="${key}"]`);
+        const icon = row.querySelector('.toggle-icon');
+        const visible = details.length > 0 && details[0].style.display !== 'none';
+        details.forEach(d => d.style.display = visible ? 'none' : 'table-row');
+        if (icon) icon.style.transform = visible ? '' : 'rotate(90deg)';
+      };
+    });
 
-    if (this.viewMode === 'mois') this.renderMois(paiements);
-    else this.renderAnnuel(paiementsAnnee, annee);
-  },
-
-  renderMois(paiements) {
-    const container = document.getElementById('paiementContent');
-    if (!paiements.length) {
-      container.innerHTML = `<div class="empty-state"><p>Aucun paiement ce mois</p></div>`;
-      return;
-    }
-    container.innerHTML = `<div class="table-wrap"><table>
-      <thead><tr>
-        <th>Date</th><th>Etablissement</th><th>Montant</th>
-        <th>Fiche Paie</th><th>Fin Contrat</th><th>Statut</th><th></th>
-      </tr></thead>
-      <tbody>${paiements.map(p => `<tr>
-        <td>${p.dateVersement || '-'}</td>
-        <td>${p.etablissement || '-'}</td>
-        <td class="num">${(p.montant || 0).toFixed(2)} &euro;</td>
-        <td>${p.fichePaye ? '<span class="badge badge-green">Oui</span>' : '<span class="badge badge-orange">Non</span>'}</td>
-        <td>${p.finContrat ? '<span class="badge badge-blue">Oui</span>' : '-'}</td>
-        <td>${p.fichePaye ? '<span class="badge badge-green">Recu</span>' : '<span class="badge badge-orange">Attente</span>'}</td>
-        <td><button class="btn-ghost btn-sm" data-edit="${p.id}">Modifier</button></td>
-      </tr>`).join('')}</tbody>
-    </table></div>`;
-
-    container.querySelectorAll('[data-edit]').forEach(btn => {
-      btn.onclick = () => {
+    // Edit buttons
+    page.querySelectorAll('[data-edit]').forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
         const p = paiements.find(x => x.id === btn.dataset.edit);
         if (p) this.openPaiementModal(p);
       };
     });
-  },
 
-  renderAnnuel(paiements, annee) {
-    const container = document.getElementById('paiementContent');
-    const moisNoms = ['Janvier', 'Fevrier', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Aout', 'Septembre', 'Octobre', 'Novembre', 'Decembre'];
-    let total = 0;
-    const rows = moisNoms.map((nom, i) => {
-      const key = `${annee}-${String(i + 1).padStart(2, '0')}`;
-      const moisP = paiements.filter(p => p.dateVersement && p.dateVersement.startsWith(key));
-      const montant = moisP.reduce((s, p) => s + (p.montant || 0), 0);
-      total += montant;
-      return `<tr>
-        <td>${nom}</td>
-        <td class="num">${moisP.length}</td>
-        <td class="num">${montant.toFixed(2)} &euro;</td>
-        <td class="num">${moisP.filter(p => p.fichePaye).length} / ${moisP.length}</td>
-      </tr>`;
-    }).join('');
-
-    container.innerHTML = `<div class="table-wrap"><table>
-      <thead><tr><th>Mois</th><th>Virements</th><th>Montant</th><th>Fiches recues</th></tr></thead>
-      <tbody>${rows}
-      <tr style="font-weight:700;border-top:2px solid var(--border)">
-        <td>Total ${annee}</td><td></td><td class="num">${total.toFixed(2)} &euro;</td><td></td>
-      </tr></tbody>
-    </table></div>`;
+    document.getElementById('addPaiement').onclick = () => this.openPaiementModal();
   },
 
   openPaiementModal(paiement = null) {
