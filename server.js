@@ -551,21 +551,26 @@ async function updatePrixGasoil() {
       id: s.id, prix: s.gazole_prix, adresse: s.adresse, ville: s.ville, maj: s.gazole_maj, nom: ''
     }));
 
-    // Recuperer les noms seulement si pas deja en cache ou 1x par jour
+    // Recuperer les noms : cache + scraping avec delai
     const nomsCache = readJSON('stations-noms.json') || {};
     const now24h = Date.now() - 24 * 60 * 60 * 1000;
     let nomsUpdated = false;
+
     for (const s of stations) {
       if (nomsCache[s.id] && nomsCache[s.id].ts > now24h) {
         s.nom = nomsCache[s.id].nom;
       } else {
+        // Essayer de scraper le nom
         try {
+          await new Promise(r => setTimeout(r, 500)); // delai entre requetes
           const html = await new Promise((resolve, reject) => {
-            const req = https.get(`https://www.prix-carburants.gouv.fr/map/recuperer_infos_pdv/${s.id}`, { headers: { 'User-Agent': 'HubloGestion/1.0' } }, res => {
+            const req = https.get(`https://www.prix-carburants.gouv.fr/map/recuperer_infos_pdv/${s.id}`, {
+              headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0' }
+            }, res => {
               let d = ''; res.on('data', c => d += c); res.on('end', () => resolve(d));
             });
             req.on('error', reject);
-            setTimeout(() => req.destroy(), 8000);
+            setTimeout(() => { try { req.destroy(); } catch(e){} resolve(''); }, 5000);
           });
           const match = html.match(/<strong>([^<]+)<\/strong>/);
           if (match) {
