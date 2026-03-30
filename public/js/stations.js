@@ -1,6 +1,45 @@
 const Stations = {
   async render() {
-    const data = await API.get('/api/prix-gasoil/stations');
+    // Charger les missions de la semaine en cours
+    const now = new Date();
+    const lundi = new Date(now);
+    lundi.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+    const dimanche = new Date(lundi);
+    dimanche.setDate(lundi.getDate() + 6);
+
+    const moisKey = App.getMoisKey();
+    const [data, missions, etabs] = await Promise.all([
+      API.get('/api/prix-gasoil/stations'),
+      API.missions.list(moisKey),
+      API.etablissements.list()
+    ]);
+
+    // Missions de cette semaine
+    const lundiStr = lundi.toISOString().slice(0, 10);
+    const dimancheStr = dimanche.toISOString().slice(0, 10);
+    const ABSENCES = ['timeo', 'timéo', 'hotel', 'hôtel', 'rdv', 'stage', 'ecole'];
+    const isAbs = (n) => ABSENCES.some(a => (n || '').toLowerCase().includes(a));
+    const weekMissions = missions.filter(m => m.date >= lundiStr && m.date <= dimancheStr && !isAbs(m.etablissement));
+    const weekEtabs = [...new Set(weekMissions.map(m => m.etablissement))];
+
+    // Determiner les zones de la semaine
+    const etabZones = {
+      'Royan': ['Issambres', 'Harmonie', 'Aloes', 'Oceane', 'Royan'],
+      'Saintes': ['Jardins', 'Clinique', 'Petites', 'Domaine', 'Pervenches', 'Saintes'],
+      'Saujon': ['Sud Saintonge', 'Saujon', 'Saint Romain'],
+      'St Porchaire': ['Moulin', 'Porchaire'],
+      'Floirac': ['Florius']
+    };
+
+    const weekZones = new Set();
+    weekEtabs.forEach(etab => {
+      for (const [zone, keywords] of Object.entries(etabZones)) {
+        if (keywords.some(k => etab.toLowerCase().includes(k.toLowerCase()))) {
+          weekZones.add(zone);
+        }
+      }
+    });
+
     const page = document.getElementById('page-stations');
 
     const trajets = {
@@ -56,12 +95,58 @@ const Stations = {
 
     const maj = data.maj ? new Date(data.maj).toLocaleDateString('fr-FR') + ' ' + new Date(data.maj).toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'}) : 'jamais';
 
+    // Section "Cette semaine" - stations recommandees
+    let weekHTML = '';
+    if (weekMissions.length > 0 && data.stations) {
+      const joursFR = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+      let weekDetails = weekMissions.map(m => {
+        const d = new Date(m.date + 'T00:00:00');
+        return `<span style="background:var(--card);padding:2px 8px;border-radius:12px;font-size:11px">${joursFR[d.getDay()]} ${d.getDate()} - ${m.etablissement}</span>`;
+      }).join(' ');
+
+      let weekStations = '';
+      for (const zone of weekZones) {
+        const villeMap = {
+          'Royan': ['Royan', 'Les Mathes', 'Arvert', 'Le Gua', 'Saint-Georges', 'Breuillet'],
+          'Saintes': ['Saintes', 'Saint-Savinien'],
+          'Saujon': ['Saujon', 'Pons'],
+          'St Porchaire': ['Saint-Porchaire'],
+          'Floirac': ['Floirac']
+        };
+        const villes = villeMap[zone] || [];
+        const match = data.stations.filter(s => villes.some(v => (s.ville || '').includes(v)));
+        if (match.length) {
+          weekStations += `
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+              <div>
+                <div style="font-size:13px;font-weight:600">Direction ${zone}</div>
+                <div style="font-size:11px;color:var(--txt2)">${match[0].adresse}, ${match[0].ville}</div>
+              </div>
+              <div style="font-size:20px;font-weight:700;color:var(--green)">${match[0].prix} &euro;</div>
+            </div>`;
+        }
+      }
+
+      weekHTML = `
+        <div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:12px;padding:16px;margin-bottom:20px">
+          <div style="font-size:15px;font-weight:700;color:var(--green);margin-bottom:8px">Cette semaine</div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px">${weekDetails}</div>
+          ${weekStations || '<div style="font-size:12px;color:var(--txt3)">Pas de station trouvee pour ces trajets</div>'}
+        </div>
+      `;
+    } else if (weekMissions.length === 0) {
+      weekHTML = '<div style="background:var(--card);border-radius:12px;padding:16px;margin-bottom:20px;color:var(--txt3);font-size:13px">Pas de mission cette semaine</div>';
+    }
+
     page.innerHTML = `
       <div class="section-header" style="margin-bottom:16px">
         <h2 class="section-title">Stations essence</h2>
-        <button class="btn btn-sm btn-primary" id="refreshStations">Actualiser les prix</button>
+        <button class="btn btn-sm btn-primary" id="refreshStations">Actualiser</button>
       </div>
-      <p style="font-size:12px;color:var(--txt3);margin-bottom:16px">Derniere MAJ : ${maj} - Source : prix-carburants.gouv.fr (MAJ auto toutes les 6h)</p>
+
+      ${weekHTML}
+
+      <p style="font-size:12px;color:var(--txt3);margin-bottom:16px">MAJ : ${maj} - prix-carburants.gouv.fr (auto toutes les 6h)</p>
 
       ${zoneCards || '<div class="empty-state"><p>Aucune station trouvee</p></div>'}
 
