@@ -89,6 +89,14 @@ const Paiements = {
           <td>Total ${annee}</td><td class="num">${paiements.length}</td><td class="num">${total.toFixed(2)} &euro;</td><td class="num">${nbFiches} / ${paiements.length}</td><td></td><td></td>
         </tr></tbody>
       </table></div>
+
+      <div class="section-header" style="margin-top:32px">
+        <h2 class="section-title">Suivi documents par etablissement</h2>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Etablissement</th><th>Contrat</th><th>Fin contrat</th><th>Attestation</th><th>Solde</th><th>Notes</th></tr></thead>
+        <tbody>${this.buildDocsRows(etabs)}</tbody>
+      </table></div>
     `;
 
     // Expand/collapse months
@@ -113,6 +121,21 @@ const Paiements = {
     });
 
     document.getElementById('addPaiement').onclick = () => this.openPaiementModal();
+  },
+
+  buildDocsRows(etabs) {
+    const ABSENCES = ['timeo', 'timéo', 'hotel', 'hôtel', 'rdv', 'stage', 'ecole'];
+    const isAbs = (n) => ABSENCES.some(a => (n || '').toLowerCase().includes(a));
+    const check = (v) => v ? '<span style="color:var(--green);font-size:16px">&#10003;</span>' : '<span style="color:var(--red);font-size:14px">&#10007;</span>';
+
+    return etabs.filter(e => !isAbs(e.nom)).map(e => `<tr>
+      <td style="font-weight:500">${e.nom}</td>
+      <td style="text-align:center">${check(e.docContrat)}</td>
+      <td style="text-align:center">${check(e.docFinContrat)}</td>
+      <td style="text-align:center">${check(e.docAttestation)}</td>
+      <td style="text-align:center">${check(e.docSolde)}</td>
+      <td style="font-size:11px;color:var(--txt3)">${e.docNotes || ''}</td>
+    </tr>`).join('');
   },
 
   openPaiementModal(paiement = null) {

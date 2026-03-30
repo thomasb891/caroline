@@ -36,21 +36,25 @@ const Etablissements = {
 
       <div class="etab-grid" id="etabGrid">
         ${etabs.length === 0 ? '<div class="empty-state"><p>Aucun etablissement. Ajoutez-en un !</p></div>' : ''}
-        ${etabs.map(e => `
+        ${etabs.map(e => {
+          const contratLabels = { interim: 'Interim', cdd: 'CDD', cdi: 'CDI', vacation: 'Vacation', stage: 'Stage' };
+          const receptionIcons = { email: 'Email', courrier: 'Courrier', site: 'Site' };
+          return `
           <div class="etab-card" data-id="${e.id}">
             <div class="etab-name">${e.nom}</div>
-            ${e.adresse ? `<div style="font-size:11px;color:var(--txt3);margin-bottom:6px">${e.adresse}</div>` : ''}
-            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">
+            ${e.adresse ? `<div style="font-size:10px;color:var(--txt3);margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.adresse}</div>` : ''}
+            <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:4px">
               <span class="etab-km">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                ${e.km} km A/R
+                ${e.km} km
               </span>
+              ${e.typeContrat ? `<span class="etab-km" style="color:var(--accent2)">${contratLabels[e.typeContrat] || e.typeContrat}</span>` : ''}
               ${e.tauxHoraire ? `<span class="etab-km" style="color:var(--green)">${e.tauxHoraire}&euro;/h</span>` : ''}
-              ${e.ifc ? `<span class="etab-km" style="color:var(--orange)">IFC ${e.ifc}%</span>` : ''}
-              ${e.cp ? `<span class="etab-km" style="color:var(--blue)">CP ${e.cp}%</span>` : ''}
+              ${e.receptionDocs ? `<span class="etab-km" style="color:var(--txt3)">${receptionIcons[e.receptionDocs] || ''}</span>` : ''}
             </div>
-          </div>
-        `).join('')}
+            ${e.telephone || e.email ? `<div style="font-size:10px;color:var(--txt3);margin-top:6px">${e.telephone ? e.telephone : ''}${e.telephone && e.email ? ' | ' : ''}${e.email ? e.email : ''}</div>` : ''}
+          </div>`;
+        }).join('')}
       </div>
 
       <div style="margin-top:40px">
@@ -140,10 +144,11 @@ const Etablissements = {
       <div class="form-group">
         <label class="form-label">Nom de l'etablissement</label>
         <input type="text" class="form-input" id="eNom" value="${etab ? etab.nom : ''}" placeholder="Ex: Residence Harmonie Breuillet">
+        <div id="eNomSuggestions" class="search-suggestions"></div>
       </div>
       <div class="form-group">
         <label class="form-label">Adresse</label>
-        <input type="text" class="form-input" id="eAdresse" value="${etab ? etab.adresse || '' : ''}" placeholder="Rechercher une adresse...">
+        <input type="text" class="form-input" id="eAdresse" value="${etab ? etab.adresse || '' : ''}" placeholder="Completee automatiquement...">
         <div id="eSuggestions" class="search-suggestions"></div>
       </div>
       <input type="hidden" id="eLat" value="${etab ? etab.lat || '' : ''}">
@@ -159,8 +164,61 @@ const Etablissements = {
         </div>
         <div id="eKmInfo" style="font-size:11px;color:var(--txt3);margin-top:4px"></div>
       </div>
+
       <div style="border-top:1px solid var(--border);margin:16px 0;padding-top:16px">
-        <div style="font-size:12px;font-weight:600;color:var(--txt2);margin-bottom:12px">REMUNERATION</div>
+        <div style="font-size:12px;font-weight:600;color:var(--txt2);margin-bottom:12px">CONTACT</div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Telephone</label>
+          <input type="tel" class="form-input" id="eTel" value="${etab ? etab.telephone || '' : ''}" placeholder="Ex: 05 46 XX XX XX">
+        </div>
+        <div class="form-group">
+          <label class="form-label">E-mail</label>
+          <input type="email" class="form-input" id="eEmail" value="${etab ? etab.email || '' : ''}" placeholder="Ex: contact@residence.fr">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Reception des documents</label>
+        <select class="form-select" id="eReceptionDocs">
+          <option value="" ${!etab || !etab.receptionDocs ? 'selected' : ''}>Non renseigne</option>
+          <option value="email" ${etab && etab.receptionDocs === 'email' ? 'selected' : ''}>Par e-mail</option>
+          <option value="courrier" ${etab && etab.receptionDocs === 'courrier' ? 'selected' : ''}>Par courrier</option>
+          <option value="site" ${etab && etab.receptionDocs === 'site' ? 'selected' : ''}>Via un site internet</option>
+        </select>
+      </div>
+      <div class="form-group" id="eSiteGroup" style="display:${etab && etab.receptionDocs === 'site' ? 'block' : 'none'}">
+        <label class="form-label">Nom / URL du site</label>
+        <input type="text" class="form-input" id="eSiteUrl" value="${etab ? etab.siteUrl || '' : ''}" placeholder="Ex: https://mon-espace.fr">
+      </div>
+
+      <div style="border-top:1px solid var(--border);margin:16px 0;padding-top:16px">
+        <div style="font-size:12px;font-weight:600;color:var(--txt2);margin-bottom:12px">DOCUMENTS RECUS</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+        <label class="form-check"><input type="checkbox" id="eDocContrat" ${etab && etab.docContrat ? 'checked' : ''}> Contrat de travail</label>
+        <label class="form-check"><input type="checkbox" id="eDocFinContrat" ${etab && etab.docFinContrat ? 'checked' : ''}> Certificat fin de contrat</label>
+        <label class="form-check"><input type="checkbox" id="eDocAttestation" ${etab && etab.docAttestation ? 'checked' : ''}> Attestation employeur</label>
+        <label class="form-check"><input type="checkbox" id="eDocSolde" ${etab && etab.docSolde ? 'checked' : ''}> Solde de tout compte</label>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes documents</label>
+        <textarea class="form-input" id="eDocNotes" rows="2" style="resize:vertical" placeholder="Ex: Manque attestation Pole Emploi...">${etab ? etab.docNotes || '' : ''}</textarea>
+      </div>
+
+      <div style="border-top:1px solid var(--border);margin:16px 0;padding-top:16px">
+        <div style="font-size:12px;font-weight:600;color:var(--txt2);margin-bottom:12px">CONTRAT & REMUNERATION</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Type de contrat</label>
+        <select class="form-select" id="eContrat">
+          <option value="" ${!etab || !etab.typeContrat ? 'selected' : ''}>Non renseigne</option>
+          <option value="interim" ${etab && etab.typeContrat === 'interim' ? 'selected' : ''}>Interim / Mission Hublo</option>
+          <option value="cdd" ${etab && etab.typeContrat === 'cdd' ? 'selected' : ''}>CDD</option>
+          <option value="cdi" ${etab && etab.typeContrat === 'cdi' ? 'selected' : ''}>CDI</option>
+          <option value="vacation" ${etab && etab.typeContrat === 'vacation' ? 'selected' : ''}>Vacation</option>
+          <option value="stage" ${etab && etab.typeContrat === 'stage' ? 'selected' : ''}>Stage</option>
+        </select>
       </div>
       <div class="form-group">
         <label class="form-label">Taux horaire net (&euro;/h)</label>
@@ -184,33 +242,63 @@ const Etablissements = {
     `;
     App.openModal(isEdit ? 'Modifier l\'etablissement' : 'Nouvel etablissement', body, footer);
 
+    // Auto-search address when typing establishment name
+    this.setupAddressSearch('eNom', 'eNomSuggestions', (place) => {
+      document.getElementById('eAdresse').value = place.display_name;
+      document.getElementById('eLat').value = place.lat;
+      document.getElementById('eLon').value = place.lon;
+      document.getElementById('eNomSuggestions').innerHTML = '';
+      this.calculateKm();
+    });
+
+    // Also allow manual address search
     this.setupAddressSearch('eAdresse', 'eSuggestions', (place) => {
       document.getElementById('eAdresse').value = place.display_name;
       document.getElementById('eLat').value = place.lat;
       document.getElementById('eLon').value = place.lon;
       document.getElementById('eSuggestions').innerHTML = '';
-      // Auto-calculate KM
       this.calculateKm();
     });
 
+    // Show/hide site URL field
+    document.getElementById('eReceptionDocs').onchange = () => {
+      document.getElementById('eSiteGroup').style.display =
+        document.getElementById('eReceptionDocs').value === 'site' ? 'block' : 'none';
+    };
+
     document.getElementById('eCalcKm').onclick = () => this.calculateKm();
 
-    document.getElementById('eSave').onclick = async () => {
+    document.getElementById('eSave').onclick = () => {
       const nom = document.getElementById('eNom').value.trim();
       if (!nom) return App.toast('Entrer un nom', 'error');
-      const km = parseFloat(document.getElementById('eKm').value) || 0;
-      const adresse = document.getElementById('eAdresse').value.trim();
-      const lat = document.getElementById('eLat').value;
-      const lon = document.getElementById('eLon').value;
-      const tauxHoraire = parseFloat(document.getElementById('eTaux').value) || 0;
-      const ifc = parseFloat(document.getElementById('eIFC').value) || 0;
-      const cp = parseFloat(document.getElementById('eCP').value) || 0;
-      const data = { nom, km, adresse, lat: lat ? parseFloat(lat) : null, lon: lon ? parseFloat(lon) : null, tauxHoraire, ifc, cp };
-      if (isEdit) await API.etablissements.update(etab.id, data);
-      else await API.etablissements.create(data);
-      App.closeModal();
-      App.toast(isEdit ? 'Etablissement modifie' : 'Etablissement ajoute');
-      this.render();
+
+      // Collect all data
+      const data = {
+        nom,
+        km: parseFloat(document.getElementById('eKm').value) || 0,
+        adresse: document.getElementById('eAdresse').value.trim(),
+        lat: document.getElementById('eLat').value ? parseFloat(document.getElementById('eLat').value) : null,
+        lon: document.getElementById('eLon').value ? parseFloat(document.getElementById('eLon').value) : null,
+        telephone: document.getElementById('eTel').value.trim(),
+        email: document.getElementById('eEmail').value.trim(),
+        receptionDocs: document.getElementById('eReceptionDocs').value,
+        siteUrl: document.getElementById('eSiteUrl').value.trim(),
+        typeContrat: document.getElementById('eContrat').value,
+        docContrat: document.getElementById('eDocContrat').checked,
+        docFinContrat: document.getElementById('eDocFinContrat').checked,
+        docAttestation: document.getElementById('eDocAttestation').checked,
+        docSolde: document.getElementById('eDocSolde').checked,
+        docNotes: document.getElementById('eDocNotes').value.trim(),
+        tauxHoraire: parseFloat(document.getElementById('eTaux').value) || 0,
+        ifc: parseFloat(document.getElementById('eIFC').value) || 0,
+        cp: parseFloat(document.getElementById('eCP').value) || 0
+      };
+
+      if (isEdit) {
+        this.saveEtab(data, etab.id, true);
+      } else {
+        this.showConfirmModal(data);
+      }
     };
 
     if (isEdit) {
@@ -221,6 +309,43 @@ const Etablissements = {
         this.render();
       };
     }
+  },
+
+  showConfirmModal(data) {
+    const contratLabels = { interim: 'Interim / Mission Hublo', cdd: 'CDD', cdi: 'CDI', vacation: 'Vacation', stage: 'Stage' };
+    const receptionLabels = { email: 'Par e-mail', courrier: 'Par courrier', site: 'Via site internet' };
+    const body = `
+      <div style="background:rgba(0,0,0,0.2);border-radius:8px;padding:16px;font-size:13px">
+        <div style="margin-bottom:12px;font-weight:700;font-size:15px">${data.nom}</div>
+        ${data.adresse ? `<div style="color:var(--txt2);margin-bottom:4px">${data.adresse}</div>` : ''}
+        ${data.km ? `<div style="margin-bottom:8px"><strong>${data.km} km</strong> aller-retour</div>` : ''}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px">
+          ${data.telephone ? `<div><span style="color:var(--txt3)">Tel :</span> ${data.telephone}</div>` : ''}
+          ${data.email ? `<div><span style="color:var(--txt3)">Email :</span> ${data.email}</div>` : ''}
+          ${data.typeContrat ? `<div><span style="color:var(--txt3)">Contrat :</span> ${contratLabels[data.typeContrat] || data.typeContrat}</div>` : ''}
+          ${data.receptionDocs ? `<div><span style="color:var(--txt3)">Documents via :</span> ${receptionLabels[data.receptionDocs] || data.receptionDocs}${data.siteUrl ? ' (' + data.siteUrl + ')' : ''}</div>` : ''}
+          ${data.tauxHoraire ? `<div><span style="color:var(--txt3)">Taux :</span> ${data.tauxHoraire} &euro;/h</div>` : ''}
+          ${data.ifc ? `<div><span style="color:var(--txt3)">IFC :</span> ${data.ifc}%</div>` : ''}
+          ${data.cp ? `<div><span style="color:var(--txt3)">CP :</span> ${data.cp}%</div>` : ''}
+        </div>
+      </div>
+      <p style="margin-top:14px;font-size:13px;color:var(--txt2);text-align:center">Les informations sont-elles correctes ?</p>
+    `;
+    const footer = `
+      <button class="btn btn-secondary" id="confirmBack">Corriger</button>
+      <button class="btn btn-primary" id="confirmOk">Confirmer et ajouter</button>
+    `;
+    App.openModal('Verifier les informations', body, footer);
+    document.getElementById('confirmOk').onclick = () => this.saveEtab(data, null, false);
+    document.getElementById('confirmBack').onclick = () => this.openEtabModal(data);
+  },
+
+  async saveEtab(data, id, isEdit) {
+    if (isEdit && id) await API.etablissements.update(id, data);
+    else await API.etablissements.create(data);
+    App.closeModal();
+    App.toast(isEdit ? 'Etablissement modifie' : 'Etablissement ajoute');
+    this.render();
   },
 
   setupAddressSearch(inputId, suggestionsId, onSelect) {
