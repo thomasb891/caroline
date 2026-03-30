@@ -551,13 +551,31 @@ async function updatePrixGasoil() {
       id: s.id, prix: s.gazole_prix, adresse: s.adresse, ville: s.ville, maj: s.gazole_maj, nom: ''
     }));
 
-    // Noms des stations depuis le cache local (pas de requetes)
+    // Noms : cache local + scraping seulement pour les nouvelles stations
     const nomsCache = readJSON('stations-noms.json') || {};
+    let nomsUpdated = false;
     for (const s of stations) {
       if (nomsCache[s.id]) {
         s.nom = nomsCache[s.id].nom;
+      } else {
+        // Nouvelle station : scraper le nom 1 seule fois
+        try {
+          await new Promise(r => setTimeout(r, 500));
+          const html = await new Promise((resolve, reject) => {
+            const req = https.get(`https://www.prix-carburants.gouv.fr/map/recuperer_infos_pdv/${s.id}`, {
+              headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0' }
+            }, res => { let d = ''; res.on('data', c => d += c); res.on('end', () => resolve(d)); });
+            req.on('error', () => resolve(''));
+            setTimeout(() => { try { req.destroy(); } catch(e){} resolve(''); }, 5000);
+          });
+          const match = html.match(/<strong>([^<]+)<\/strong>/);
+          s.nom = match ? match[1].trim() : s.adresse;
+          nomsCache[s.id] = { nom: s.nom, ts: 9999999999999 };
+          nomsUpdated = true;
+        } catch(e) { s.nom = s.adresse; }
       }
     }
+    if (nomsUpdated) writeJSON('stations-noms.json', nomsCache);
 
     // Aussi grouper par zone (ville) pour conseiller selon le trajet
     const zones = {};
