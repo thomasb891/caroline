@@ -133,6 +133,46 @@ ${content}
       calRows += '<tr>' + cells.slice(i, i + 7).join('') + '</tr>';
     }
 
+    // Build detail table (sorted by date)
+    const sortedWork = [...workMissions].sort((a, b) => a.date.localeCompare(b.date));
+    const joursFR = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+    let detailRows = sortedWork.map(m => {
+      const dt = new Date(m.date + 'T00:00:00');
+      const jour = joursFR[dt.getDay()];
+      return `<tr>
+        <td>${this.formatDateFR(m.date)}</td>
+        <td>${jour}</td>
+        <td>${m.etablissement || '-'}</td>
+        <td class="num">${m.heureDebut || '-'}</td>
+        <td class="num">${m.heureFin || '-'}</td>
+        <td class="num" style="font-weight:700">${m.heuresTravaillees ? m.heuresTravaillees.toFixed(1) + 'h' : '-'}</td>
+        <td class="num">${m.km ? m.km.toFixed(1) : '-'}</td>
+      </tr>`;
+    }).join('');
+    detailRows += `<tr class="total">
+      <td colspan="5">Total</td>
+      <td class="num">${totalH.toFixed(1)}h</td>
+      <td class="num">${totalKm.toFixed(0)} km</td>
+    </tr>`;
+
+    // Recap par etablissement
+    const byEtab = {};
+    workMissions.forEach(m => {
+      const k = m.etablissement || '?';
+      if (!byEtab[k]) byEtab[k] = { heures: 0, km: 0, count: 0 };
+      byEtab[k].heures += m.heuresTravaillees || 0;
+      byEtab[k].km += m.km || 0;
+      byEtab[k].count++;
+    });
+    let recapRows = Object.keys(byEtab).sort().map(etab => {
+      const d = byEtab[etab];
+      return `<tr><td>${etab}</td><td class="num">${d.count}</td><td class="num">${d.heures.toFixed(1)}h</td><td class="num">${d.km.toFixed(0)} km</td></tr>`;
+    }).join('');
+    recapRows += `<tr class="total"><td>Total</td><td class="num">${workMissions.length}</td><td class="num">${totalH.toFixed(1)}h</td><td class="num">${totalKm.toFixed(0)} km</td></tr>`;
+
+    // Count unique days worked
+    const uniqueDays = new Set(workMissions.map(m => m.date)).size;
+
     const html = `
       <div class="header">
         <h1>Planning - ${moisLabel.charAt(0).toUpperCase() + moisLabel.slice(1)}</h1>
@@ -142,12 +182,25 @@ ${content}
         <div class="stat"><div class="stat-label">Missions</div><div class="stat-val">${workMissions.length}</div></div>
         <div class="stat"><div class="stat-label">Heures</div><div class="stat-val">${totalH.toFixed(1)}h</div></div>
         <div class="stat"><div class="stat-label">Kilometres</div><div class="stat-val">${totalKm.toFixed(0)} km</div></div>
-        <div class="stat"><div class="stat-label">Jours travailles</div><div class="stat-val">${workMissions.length}</div></div>
+        <div class="stat"><div class="stat-label">Jours travailles</div><div class="stat-val">${uniqueDays}</div></div>
       </div>
       <table class="cal-table">
         <thead><tr><th>Lundi</th><th>Mardi</th><th>Mercredi</th><th>Jeudi</th><th>Vendredi</th><th>Samedi</th><th>Dimanche</th></tr></thead>
         <tbody>${calRows}</tbody>
       </table>
+
+      <div class="section-title">Detail des missions</div>
+      <table class="data">
+        <thead><tr><th>Date</th><th>Jour</th><th>Etablissement</th><th style="text-align:right">Debut</th><th style="text-align:right">Fin</th><th style="text-align:right">Heures</th><th style="text-align:right">KM</th></tr></thead>
+        <tbody>${detailRows}</tbody>
+      </table>
+
+      <div class="section-title">Recapitulatif par etablissement</div>
+      <table class="data">
+        <thead><tr><th>Etablissement</th><th style="text-align:right">Missions</th><th style="text-align:right">Heures</th><th style="text-align:right">KM</th></tr></thead>
+        <tbody>${recapRows}</tbody>
+      </table>
+
       <div class="footer">Document genere le ${new Date().toLocaleDateString('fr-FR')} - Hublo Gestion</div>
     `;
 
