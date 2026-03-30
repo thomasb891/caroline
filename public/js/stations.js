@@ -42,15 +42,8 @@ const Stations = {
 
     const page = document.getElementById('page-stations');
 
-    // Trajets dynamiques : seulement les zones ou Caroline travaille (3 derniers mois)
-    const now3m = new Date();
-    now3m.setMonth(now3m.getMonth() - 3);
-    const recentMissions = await API.missions.listAnnee(now.getFullYear().toString());
-    const recentEtabs = [...new Set(
-      recentMissions
-        .filter(m => m.date >= now3m.toISOString().slice(0, 10) && !isAbs(m.etablissement))
-        .map(m => m.etablissement)
-    )];
+    // Trajets : seulement les zones de la semaine en cours
+    const recentEtabs = weekEtabs;
 
     const allTrajets = {
       'Royan': { keywords: ['Issambres', 'Harmonie', 'Aloes', 'Oceane', 'Royan'], villes: ['Royan', 'Breuillet', 'Saint-Sulpice', 'Arvert', 'Les Mathes', 'Le Gua', 'Saint-Georges'] },
