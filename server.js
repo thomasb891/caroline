@@ -8,15 +8,7 @@ const app = express();
 const PORT = 3050;
 const POTAGER_PORT = 8282;
 
-app.use(express.json());
-
-// Page d'accueil
-const accueilPath = path.join(__dirname, '..', 'index.html');
-if (fs.existsSync(accueilPath)) {
-  app.get('/accueil', (req, res) => res.sendFile(accueilPath));
-}
-
-// Proxy potager -> port interne 8282
+// Proxy potager AVANT express.json() pour ne pas consommer le body
 const potagerDir = path.join(__dirname, '..', 'potager');
 if (fs.existsSync(potagerDir)) {
   const potager = spawn(process.execPath, ['server.js'], {
@@ -39,6 +31,14 @@ if (fs.existsSync(potagerDir)) {
     pathRewrite: { '^/potager': '' },
     ws: true
   }));
+}
+
+app.use(express.json());
+
+// Page d'accueil
+const accueilPath = path.join(__dirname, '..', 'index.html');
+if (fs.existsSync(accueilPath)) {
+  app.get('/accueil', (req, res) => res.sendFile(accueilPath));
 }
 
 app.use(express.static(path.join(__dirname, 'public')));
