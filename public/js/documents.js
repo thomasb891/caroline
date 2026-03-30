@@ -21,7 +21,7 @@ const Documents = {
     if (display) display.textContent = App.getMoisLabel();
 
     // Get unique etablissements worked this month (exclude absences)
-    const ABSENCES = ['timeo', 'timéo', 'hotel', 'hôtel', 'rdv'];
+    const ABSENCES = ['timeo', 'timéo', 'hotel', 'hôtel', 'rdv', 'stage', 'ecole', 'école'];
     const workedEtabs = [...new Set(
       missions
         .filter(m => !ABSENCES.some(a => (m.etablissement || '').toLowerCase().includes(a)))
@@ -116,19 +116,27 @@ const Documents = {
 
   async renderYear() {
     const annee = this.currentYear.toString();
-    const etabs = await API.etablissements.list();
+    const ABSENCES = ['timeo', 'timéo', 'hotel', 'hôtel', 'rdv', 'stage', 'ecole', 'école'];
+    const isAbs = (n) => ABSENCES.some(a => (n || '').toLowerCase().includes(a));
 
     const display = document.getElementById('monthDisplayD');
     if (display) display.textContent = annee;
 
     const moisNoms = ['Jan', 'Fev', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aout', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-    // Load all docs for the year (all 12 months)
+    // Load missions + docs for each month
     const allDocs = [];
+    const moisMissions = {}; // mois -> Set of etab names
     for (let m = 1; m <= 12; m++) {
       const key = `${annee}-${String(m).padStart(2, '0')}`;
-      const docs = await API.documents.list(key);
+      const [missions, docs] = await Promise.all([
+        API.missions.list(key),
+        API.documents.list(key)
+      ]);
       docs.forEach(d => allDocs.push(d));
+      moisMissions[key] = new Set(
+        missions.filter(mi => !isAbs(mi.etablissement)).map(mi => mi.etablissement)
+      );
     }
 
     // Build docs map: etab -> mois -> doc
@@ -138,24 +146,31 @@ const Documents = {
       docsMap[d.etablissement][d.mois] = d;
     });
 
-    const allEtabNames = [...new Set([...etabs.map(e => e.nom), ...Object.keys(docsMap)])].sort();
+    // Get all etab names that worked this year (exclude absences)
+    const allWorkedEtabs = new Set();
+    Object.values(moisMissions).forEach(s => s.forEach(e => allWorkedEtabs.add(e)));
+    const etabNames = [...allWorkedEtabs].sort();
 
-    const check = (doc) => {
-      if (!doc) return '<span style="color:var(--txt3)">-</span>';
+    const check = (doc, worked) => {
+      if (!worked) return '<span style="color:var(--txt3)">-</span>';
+      if (!doc) return '<span style="color:var(--red);font-size:12px;font-weight:700">&#10007;</span>';
       const keys = ['fichePaye', 'contrat', 'finContrat', 'attestation', 'solde'];
       const done = keys.filter(k => doc[k]).length;
       if (done === keys.length) return '<span style="color:var(--green);font-size:14px">&#10003;</span>';
-      if (done > 0) return `<span style="color:var(--orange);font-size:11px">${done}/5</span>`;
-      return '<span style="color:var(--red);font-size:14px">&#10007;</span>';
+      if (done > 0) return `<span style="color:var(--orange);font-size:11px;font-weight:700">${done}/5</span>`;
+      return '<span style="color:var(--red);font-size:12px;font-weight:700">&#10007;</span>';
     };
 
     const headerCols = moisNoms.map(n => `<th style="text-align:center;font-size:11px;padding:6px 4px">${n}</th>`).join('');
-    const rows = allEtabNames.map(etab => {
+    let totalManquants = 0;
+    const rows = etabNames.map(etab => {
       const cols = [];
       for (let m = 1; m <= 12; m++) {
         const key = `${annee}-${String(m).padStart(2, '0')}`;
+        const worked = moisMissions[key] && moisMissions[key].has(etab);
         const doc = docsMap[etab] && docsMap[etab][key];
-        cols.push(`<td style="text-align:center;padding:6px 4px">${check(doc)}</td>`);
+        if (worked && (!doc || !['fichePaye','contrat','finContrat','attestation','solde'].every(k => doc[k]))) totalManquants++;
+        cols.push(`<td style="text-align:center;padding:6px 4px">${check(doc, worked)}</td>`);
       }
       return `<tr><td style="font-weight:500;white-space:nowrap">${etab}</td>${cols.join('')}</tr>`;
     }).join('');
@@ -164,10 +179,20 @@ const Documents = {
     page.innerHTML = `
       ${this.renderLastUpdated()}
       ${this.renderViewToggle()}
-      <div class="section-header" style="margin-bottom:16px">
-        <h2 class="section-title">Documents ${annee} - Vue annuelle</h2>
-      </div>
-      <p style="font-size:12px;color:var(--txt2);margin-bottom:16px">&#10003; = complet, X/5 = partiel, &#10007; = rien, - = pas de donnee</p>
+      ${totalManquants > 0 ? `<div class="stat-card" style="margin-bottom:16px;border-left:4px solid var(--red)">
+        <div class="label" style="color:var(--red)">DOCUMENTS MANQUANTS</div>
+        <div class="value" style="color:var(--red)">${totalManquants}</div>
+        <div class="sub">mois/etablissement incomplets sur ${annee}</div>
+      </div>` : `<div class="stat-card" style="margin-bottom:16px;border-left:4px solid var(--green)">
+        <div class="label" style="color:var(--green)">TOUS LES DOCUMENTS RECUS</div>
+        <div class="value" style="color:var(--green)">OK</div>
+      </div>`}
+      <p style="font-size:12px;color:var(--txt2);margin-bottom:12px">
+        <span style="color:var(--green)">&#10003;</span> complet &nbsp;
+        <span style="color:var(--orange)">X/5</span> partiel &nbsp;
+        <span style="color:var(--red)">&#10007;</span> manquant &nbsp;
+        <span style="color:var(--txt3)">-</span> pas travaille
+      </p>
       <div class="table-wrap" style="overflow-x:auto"><table style="font-size:13px">
         <thead><tr><th>Etablissement</th>${headerCols}</tr></thead>
         <tbody>${rows}</tbody>
