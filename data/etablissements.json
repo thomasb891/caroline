@@ -11,10 +11,10 @@
     "receptionDocs": "",
     "siteUrl": "",
     "typeContrat": "",
-    "tauxHoraire": 0,
+    "tauxHoraire": 11.24,
     "allocationARE": 0,
-    "ifc": 0,
-    "cp": 0,
+    "ifc": 10,
+    "cp": 10,
     "kmCalcule": 8.1
   },
   {
@@ -28,11 +28,11 @@
     "email": "",
     "receptionDocs": "",
     "siteUrl": "",
-    "typeContrat": "",
-    "tauxHoraire": 0,
+    "typeContrat": "cdd",
+    "tauxHoraire": 10.3,
     "allocationARE": 0,
-    "ifc": 0,
-    "cp": 0,
+    "ifc": 10,
+    "cp": 10,
     "kmCalcule": 75.8
   },
   {
@@ -46,11 +46,11 @@
     "email": "",
     "receptionDocs": "",
     "siteUrl": "",
-    "typeContrat": "",
-    "tauxHoraire": 0,
+    "typeContrat": "cdd",
+    "tauxHoraire": 9.62,
     "allocationARE": 0,
-    "ifc": 0,
-    "cp": 0,
+    "ifc": 10,
+    "cp": 10,
     "kmCalcule": 55.3
   },
   {
@@ -65,10 +65,10 @@
     "receptionDocs": "",
     "siteUrl": "",
     "typeContrat": "",
-    "tauxHoraire": 0,
+    "tauxHoraire": 11.24,
     "allocationARE": 0,
-    "ifc": 0,
-    "cp": 0,
+    "ifc": 10,
+    "cp": 10,
     "kmCalcule": 20.3
   },
   {
@@ -83,10 +83,10 @@
     "receptionDocs": "",
     "siteUrl": "",
     "typeContrat": "",
-    "tauxHoraire": 0,
+    "tauxHoraire": 11.24,
     "allocationARE": 0,
-    "ifc": 0,
-    "cp": 0,
+    "ifc": 10,
+    "cp": 10,
     "kmCalcule": 38.5
   },
   {
@@ -101,10 +101,10 @@
     "receptionDocs": "",
     "siteUrl": "",
     "typeContrat": "",
-    "tauxHoraire": 0,
+    "tauxHoraire": 11.24,
     "allocationARE": 0,
-    "ifc": 0,
-    "cp": 0,
+    "ifc": 10,
+    "cp": 10,
     "kmCalcule": 40.7
   },
   {
@@ -163,17 +163,25 @@
   },
   {
     "id": "mnd0jco49pueo",
-    "nom": "EHPAD Saint Romain de Benet 39,4km",
+    "nom": "EHPAD Saint Romain de Benet",
     "km": 39.4,
     "adresse": "17 Rue de Saintonge 17600 Saint-Romain-de-Benet",
     "lat": 45.690445,
     "lon": -0.843879,
     "telephone": "05 46 22 29 50",
-    "kmCalcule": 39.4
+    "kmCalcule": 39.4,
+    "email": "",
+    "receptionDocs": "",
+    "siteUrl": "",
+    "typeContrat": "",
+    "tauxHoraire": 0,
+    "allocationARE": 0,
+    "ifc": 0,
+    "cp": 0
   },
   {
     "id": "mnd0jco4davwh",
-    "nom": "Résidence Harmonie Breuillet 75,8km",
+    "nom": "Résidence Harmonie Breuillet",
     "km": 75.8,
     "tauxHoraire": 11.24,
     "ifc": 10,
@@ -191,13 +199,21 @@
   },
   {
     "id": "mnd0jco450251",
-    "nom": "Clinique Richelieu 29km",
+    "nom": "Clinique Richelieu",
     "km": 29,
     "adresse": "22 Rue Montlouis 17100 Saintes",
     "lat": 45.749786,
     "lon": -0.643577,
     "telephone": "05 46 90 58 00",
-    "kmCalcule": 36.3
+    "kmCalcule": 36.3,
+    "email": "",
+    "receptionDocs": "",
+    "siteUrl": "",
+    "typeContrat": "",
+    "tauxHoraire": 11.24,
+    "allocationARE": 0,
+    "ifc": 10,
+    "cp": 10
   },
   {
     "id": "mnd0jco4seccb",
@@ -211,10 +227,10 @@
     "receptionDocs": "",
     "siteUrl": "",
     "typeContrat": "",
-    "tauxHoraire": 0,
+    "tauxHoraire": 11.24,
     "allocationARE": 0,
-    "ifc": 0,
-    "cp": 0,
+    "ifc": 10,
+    "cp": 10,
     "kmCalcule": 72.8
   },
   {
@@ -229,8 +245,20 @@
   },
   {
     "id": "mnd0jco4vydhm",
-    "nom": "Ecole 30,6 km",
-    "km": 30.6
+    "nom": "Ecole",
+    "km": 30.6,
+    "adresse": "",
+    "lat": null,
+    "lon": null,
+    "telephone": "",
+    "email": "",
+    "receptionDocs": "",
+    "siteUrl": "",
+    "typeContrat": "",
+    "tauxHoraire": 0,
+    "allocationARE": 0,
+    "ifc": 0,
+    "cp": 0
   },
   {
     "id": "mnd0jco4vlozr",
@@ -244,13 +272,21 @@
   },
   {
     "id": "mnd0jcped9ymf",
-    "nom": "Residence Oceane 66,6km",
+    "nom": "Residence Oceane",
     "km": 66.6,
     "adresse": "92 Av du Lieutenant Colonel Tourtet 17110 Saint-Georges-de-Didonne",
     "lat": 45.607709,
     "lon": -0.992603,
     "telephone": "05 46 06 08 16",
-    "kmCalcule": 62.9
+    "kmCalcule": 62.9,
+    "email": "",
+    "receptionDocs": "",
+    "siteUrl": "",
+    "typeContrat": "",
+    "tauxHoraire": 11.24,
+    "allocationARE": 0,
+    "ifc": 10,
+    "cp": 10
   },
   {
     "id": "mnd1ph7ti1llt",
