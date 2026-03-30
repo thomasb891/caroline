@@ -160,9 +160,7 @@ const Stations = {
 
       ${weekHTML}
 
-      <p style="font-size:12px;color:var(--txt3);margin-bottom:16px">MAJ : ${maj} - prix-carburants.gouv.fr (auto toutes les 6h)</p>
-
-      ${zoneCards || '<div class="empty-state"><p>Aucune station trouvee</p></div>'}
+      <p style="font-size:12px;color:var(--txt3);margin-bottom:16px">MAJ : ${maj} - prix-carburants.gouv.fr (auto toutes les 10 min)</p>
 
       <div class="section-header" style="margin-top:24px;margin-bottom:12px">
         <h2 class="section-title">Toutes les stations (50km)</h2>
