@@ -73,11 +73,12 @@ const Planning = {
 
   async render() {
     const moisKey = App.getMoisKey();
-    const [missions, etabs, vacances, config] = await Promise.all([
+    const [missions, etabs, vacances, config, prixMois] = await Promise.all([
       API.missions.list(moisKey),
       API.etablissements.list(),
       API.vacances.list(moisKey),
-      API.config.get()
+      API.config.get(),
+      API.prixGasoil.getForMonth(App.getMoisKey())
     ]);
     this.missions = missions;
     this.etablissements = etabs;
@@ -148,7 +149,7 @@ const Planning = {
         <div class="stat-card orange">
           <div class="label">Kilometres</div>
           <div class="value">${totalKm.toFixed(0)} km</div>
-          <div class="sub">Carburant : ${(totalKm / 100 * (config.consommation || 6.5) * (config.prixGasoil || 1.949)).toFixed(2)} &euro;</div>
+          <div class="sub">Carburant : ${(totalKm / 100 * (config.consommation || 6.5) * prixMois).toFixed(2)} &euro; (${prixMois.toFixed(3)}&euro;/L)</div>
         </div>
       </div>
       <div class="calendar-grid" id="calGrid"></div>

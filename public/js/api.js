@@ -47,6 +47,18 @@ const API = {
     get: () => API.get('/api/config'),
     update: (d) => API.put('/api/config', d)
   },
+  prixGasoil: {
+    list: () => API.get('/api/prix-gasoil'),
+    save: (mois, prix) => API.post('/api/prix-gasoil', { mois, prix }),
+    getForMonth: async (mois) => {
+      const list = await API.get('/api/prix-gasoil');
+      const entry = list.find(p => p.mois === mois);
+      if (entry) return entry.prix;
+      // Fallback: closest previous month
+      const sorted = list.filter(p => p.mois <= mois).sort((a, b) => b.mois.localeCompare(a.mois));
+      return sorted.length ? sorted[0].prix : 1.949;
+    }
+  },
   documentsUpload: {
     upload: async (formData) => {
       const r = await fetch(API_BASE + '/api/documents/upload', { method: 'POST', body: formData });

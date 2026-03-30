@@ -203,6 +203,21 @@ app.post('/api/documents', (req, res) => {
   }
 });
 
+// --- Prix gasoil par mois ---
+app.get('/api/prix-gasoil', (req, res) => {
+  res.json(readJSON('prix-gasoil.json'));
+});
+app.post('/api/prix-gasoil', (req, res) => {
+  let list = readJSON('prix-gasoil.json');
+  if (!Array.isArray(list)) list = [];
+  const i = list.findIndex(p => p.mois === req.body.mois);
+  if (i >= 0) list[i].prix = req.body.prix;
+  else list.push({ mois: req.body.mois, prix: req.body.prix });
+  list.sort((a, b) => b.mois.localeCompare(a.mois));
+  writeJSON('prix-gasoil.json', list);
+  res.json(list);
+});
+
 // --- Config ---
 app.get('/api/config', (req, res) => {
   const p = path.join(DATA, 'config.json');
@@ -210,6 +225,17 @@ app.get('/api/config', (req, res) => {
   res.json(JSON.parse(fs.readFileSync(p, 'utf8')));
 });
 app.put('/api/config', (req, res) => {
+  // Auto-save current month gasoil price
+  if (req.body.prixGasoil) {
+    const now = new Date();
+    const moisKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    let prixList = readJSON('prix-gasoil.json');
+    if (!Array.isArray(prixList)) prixList = [];
+    const i = prixList.findIndex(p => p.mois === moisKey);
+    if (i >= 0) prixList[i].prix = req.body.prixGasoil;
+    else prixList.push({ mois: moisKey, prix: req.body.prixGasoil });
+    writeJSON('prix-gasoil.json', prixList);
+  }
   writeJSON('config.json', req.body);
   res.json(req.body);
 });
