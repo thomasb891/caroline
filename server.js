@@ -413,13 +413,16 @@ app.post('/api/comparaison', (req, res) => {
 app.get('/api/notifications', (req, res) => {
   const missions = readJSON('missions.json');
   const documents = readJSON('documents.json');
-  const absenceNames = ['timeo', 'timéo', 'hotel', 'hôtel', 'rdv'];
+  const absenceNames = ['timeo', 'timéo', 'hotel', 'hôtel', 'rdv', 'stage', 'ecole', 'école'];
   const isAbsence = (name) => absenceNames.some(a => (name || '').toLowerCase().includes(a));
+
+  // Only check from 2026
+  const minDate = '2026-01-01';
 
   // Group missions by mois+etablissement (only work missions)
   const moisEtabs = {};
   missions.forEach(m => {
-    if (!m.date || isAbsence(m.etablissement)) return;
+    if (!m.date || isAbsence(m.etablissement) || m.date < minDate) return;
     const moisKey = m.date.slice(0, 7); // "2026-03"
     const key = `${moisKey}|${m.etablissement}`;
     if (!moisEtabs[key]) moisEtabs[key] = { mois: moisKey, etablissement: m.etablissement, lastDate: m.date };

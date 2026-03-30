@@ -182,14 +182,19 @@ const Planning = {
         `<div style="padding:4px 0;font-size:13px">Fiche de paie manquante : <strong>${n.etablissement}</strong> - ${n.moisLabel} (il y a ${n.daysSince} jours)</div>`
       ).join('');
       notifBox.innerHTML = `
-        <div style="background:rgba(255,193,7,0.15);border:1px solid rgba(255,193,7,0.4);border-radius:8px;padding:12px 16px;margin-bottom:16px">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-            <svg viewBox="0 0 24 24" fill="none" stroke="#f0ad4e" stroke-width="2" width="18" height="18"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            <span style="font-weight:600;color:#f0ad4e;font-size:14px">Notifications (${notifications.length})</span>
+        <div style="background:rgba(255,193,7,0.15);border:1px solid rgba(255,193,7,0.4);border-radius:8px;padding:10px 16px;margin-bottom:16px;cursor:pointer" id="notifToggle">
+          <div style="display:flex;align-items:center;gap:8px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#f0ad4e" stroke-width="2" width="16" height="16"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span style="font-weight:600;color:#f0ad4e;font-size:13px">${notifications.length} fiche(s) de paie manquante(s)</span>
+            <span style="margin-left:auto;font-size:11px;color:var(--txt3)">Cliquer pour voir</span>
           </div>
-          ${items}
+          <div id="notifDetails" style="display:none;margin-top:8px">${items}</div>
         </div>
       `;
+      document.getElementById('notifToggle').onclick = () => {
+        const d = document.getElementById('notifDetails');
+        d.style.display = d.style.display === 'none' ? 'block' : 'none';
+      };
     }
 
     this.renderCalendar();
