@@ -27,7 +27,7 @@ const App = {
     document.querySelectorAll('.page').forEach(el => {
       el.classList.toggle('active', el.id === `page-${page}`);
     });
-    const titles = { planning: 'Planning', paiements: 'Paiements', documents: 'Documents', statistiques: 'Statistiques', impots: 'Impots & Frais KM', comparaison: 'Comparaison Impots', logs: 'Journal d\'activite', parametres: 'Parametres' };
+    const titles = { planning: 'Planning', paiements: 'Paiements', documents: 'Documents', statistiques: 'Statistiques', stations: 'Stations essence', impots: 'Impots & Frais KM', comparaison: 'Comparaison Impots', logs: 'Journal d\'activite', parametres: 'Parametres' };
     document.getElementById('pageTitle').textContent = titles[page] || page;
     location.hash = page;
 
@@ -35,6 +35,7 @@ const App = {
     else if (page === 'paiements') Paiements.render();
     else if (page === 'documents') Documents.render();
     else if (page === 'statistiques') Stats.render();
+    else if (page === 'stations') Stations.render();
     else if (page === 'impots') Impots.render();
     else if (page === 'comparaison') Comparaison.render();
     else if (page === 'logs') Logs.render();
