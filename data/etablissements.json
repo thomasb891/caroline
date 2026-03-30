@@ -2,7 +2,7 @@
   {
     "id": "mnd0jco4zsdsh",
     "nom": "Les Jardins du haut Thenac",
-    "km": 8.1,
+    "km": 7.6,
     "adresse": "Chemin de la Garenne 17460 Thénac",
     "lat": 45.663743,
     "lon": -0.649626,
@@ -14,12 +14,13 @@
     "tauxHoraire": 0,
     "allocationARE": 0,
     "ifc": 0,
-    "cp": 0
+    "cp": 0,
+    "kmCalcule": 8.1
   },
   {
     "id": "mnd0jco4101ae",
     "nom": "Les Issambres",
-    "km": 75.8,
+    "km": 75.4,
     "adresse": "12 Rue Paul Doumer 17200 Royan",
     "lat": 45.626007,
     "lon": -1.027064,
@@ -31,12 +32,13 @@
     "tauxHoraire": 0,
     "allocationARE": 0,
     "ifc": 0,
-    "cp": 0
+    "cp": 0,
+    "kmCalcule": 75.8
   },
   {
     "id": "mnd0jco4y1hwy",
     "nom": "Residence sud Saintonge",
-    "km": 55.3,
+    "km": 55,
     "adresse": "24 Route des Ecluses 17600 Saujon",
     "lat": 45.676208,
     "lon": -0.931685,
@@ -48,12 +50,13 @@
     "tauxHoraire": 0,
     "allocationARE": 0,
     "ifc": 0,
-    "cp": 0
+    "cp": 0,
+    "kmCalcule": 55.3
   },
   {
     "id": "mnd0jco4z64pr",
     "nom": "Les Pervenches Gemozac",
-    "km": 20.3,
+    "km": 20.4,
     "adresse": "Les Pervenches, Route de Mortagne, Les Élies, La Gare de Virollet, Gémozac, Saintes, Charente-Maritime, Nouvelle-Aquitaine, France métropolitaine, 17260, France",
     "lat": 45.5484107,
     "lon": -0.6963454,
@@ -65,12 +68,13 @@
     "tauxHoraire": 0,
     "allocationARE": 0,
     "ifc": 0,
-    "cp": 0
+    "cp": 0,
+    "kmCalcule": 20.3
   },
   {
     "id": "mnd0jco46h46d",
     "nom": "Les jardins de Saintes",
-    "km": 38.5,
+    "km": 29.6,
     "adresse": "139 Rue de la Boule 17100 Saintes",
     "lat": 45.754127,
     "lon": -0.63897,
@@ -82,12 +86,13 @@
     "tauxHoraire": 0,
     "allocationARE": 0,
     "ifc": 0,
-    "cp": 0
+    "cp": 0,
+    "kmCalcule": 38.5
   },
   {
     "id": "mnd0jco4c3zfs",
     "nom": "Villa Florius",
-    "km": 40.7,
+    "km": 40.4,
     "adresse": "2 Rue des Cerisiers 17120 Floirac",
     "lat": 45.48905,
     "lon": -0.726554,
@@ -99,12 +104,13 @@
     "tauxHoraire": 0,
     "allocationARE": 0,
     "ifc": 0,
-    "cp": 0
+    "cp": 0,
+    "kmCalcule": 40.7
   },
   {
     "id": "mnd0jco4s5zpx",
     "nom": "EHPAD Le Domaine Cravans",
-    "km": 15.4,
+    "km": 16.4,
     "adresse": "EHPAD Le Domaine, Rue du Port, La Chataignée, Le Breuil, Cravans, Saintes, Charente-Maritime, Nouvelle-Aquitaine, France métropolitaine, 17260, France",
     "lat": 45.5954467,
     "lon": -0.7146533,
@@ -116,12 +122,13 @@
     "tauxHoraire": 0,
     "allocationARE": 0,
     "ifc": 0,
-    "cp": 0
+    "cp": 0,
+    "kmCalcule": 15.4
   },
   {
     "id": "mnd0jco4b7i0z",
     "nom": "Moulin du  val du bruant",
-    "km": 57.2,
+    "km": 54.6,
     "adresse": "EHPAD - Le Moulin du Val du Bruant, Rue Nationale, Les Grandes Renaudières, Bois Gachet, Saint-Porchaire, Saintes, Charente-Maritime, Nouvelle-Aquitaine, France métropolitaine, 17250, France",
     "lat": 45.81838,
     "lon": -0.776742,
@@ -133,7 +140,8 @@
     "tauxHoraire": 0,
     "allocationARE": 0,
     "ifc": 0,
-    "cp": 0
+    "cp": 0,
+    "kmCalcule": 57.2
   },
   {
     "id": "mnd0jco4hnebk",
@@ -150,7 +158,8 @@
     "tauxHoraire": 0,
     "allocationARE": 0,
     "ifc": 0,
-    "cp": 0
+    "cp": 0,
+    "kmCalcule": 29
   },
   {
     "id": "mnd0jco49pueo",
@@ -159,12 +168,13 @@
     "adresse": "17 Rue de Saintonge 17600 Saint-Romain-de-Benet",
     "lat": 45.690445,
     "lon": -0.843879,
-    "telephone": "05 46 22 29 50"
+    "telephone": "05 46 22 29 50",
+    "kmCalcule": 39.4
   },
   {
     "id": "mnd0jco4davwh",
     "nom": "Résidence Harmonie Breuillet 75,8km",
-    "km": 75.7,
+    "km": 75.8,
     "tauxHoraire": 11.24,
     "ifc": 10,
     "cp": 10,
@@ -176,21 +186,23 @@
     "lon": -1.052543,
     "receptionDocs": "",
     "siteUrl": "",
-    "allocationARE": 0
+    "allocationARE": 0,
+    "kmCalcule": 75.7
   },
   {
     "id": "mnd0jco450251",
     "nom": "Clinique Richelieu 29km",
-    "km": 36.3,
+    "km": 29,
     "adresse": "22 Rue Montlouis 17100 Saintes",
     "lat": 45.749786,
     "lon": -0.643577,
-    "telephone": "05 46 90 58 00"
+    "telephone": "05 46 90 58 00",
+    "kmCalcule": 36.3
   },
   {
     "id": "mnd0jco4seccb",
     "nom": "Residence Les Aloes",
-    "km": 72.8,
+    "km": 69.4,
     "adresse": "11 Route de Saint-Palais 17200 Saint-Sulpice-de-Royan",
     "lat": 45.672296,
     "lon": -1.013018,
@@ -202,7 +214,8 @@
     "tauxHoraire": 0,
     "allocationARE": 0,
     "ifc": 0,
-    "cp": 0
+    "cp": 0,
+    "kmCalcule": 72.8
   },
   {
     "id": "mnd0jco49s4g1",
@@ -232,11 +245,12 @@
   {
     "id": "mnd0jcped9ymf",
     "nom": "Residence Oceane 66,6km",
-    "km": 62.9,
+    "km": 66.6,
     "adresse": "92 Av du Lieutenant Colonel Tourtet 17110 Saint-Georges-de-Didonne",
     "lat": 45.607709,
     "lon": -0.992603,
-    "telephone": "05 46 06 08 16"
+    "telephone": "05 46 06 08 16",
+    "kmCalcule": 62.9
   },
   {
     "id": "mnd1ph7ti1llt",
