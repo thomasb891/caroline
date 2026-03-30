@@ -93,5 +93,14 @@
     "id": "mnd0jcped9ymf",
     "nom": "Residence Oceane 66,6km",
     "km": 66.6
+  },
+  {
+    "id": "mnd1ph7ti1llt",
+    "nom": "Pole Emploi",
+    "km": 0,
+    "typeContrat": "interim",
+    "tauxHoraire": 0,
+    "ifc": 0,
+    "cp": 0
   }
 ]

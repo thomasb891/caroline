@@ -206,9 +206,13 @@ const Etablissements = {
           <option value="stage" ${etab && etab.typeContrat === 'stage' ? 'selected' : ''}>Stage</option>
         </select>
       </div>
-      <div class="form-group">
-        <label class="form-label">Taux horaire net (&euro;/h)</label>
+      <div class="form-group" id="eTauxGroup">
+        <label class="form-label" id="eTauxLabel">Taux horaire net (&euro;/h)</label>
         <input type="number" step="0.001" class="form-input" id="eTaux" value="${etab ? etab.tauxHoraire || '' : ''}" placeholder="Ex: 12.424">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Allocation journaliere ARE (&euro;/jour)</label>
+        <input type="number" step="0.01" class="form-input" id="eARE" value="${etab ? etab.allocationARE || '' : ''}" placeholder="Ex: 48.64 (Pole Emploi uniquement)">
       </div>
       <div class="form-row">
         <div class="form-group">
@@ -271,6 +275,7 @@ const Etablissements = {
         siteUrl: document.getElementById('eSiteUrl').value.trim(),
         typeContrat: document.getElementById('eContrat').value,
         tauxHoraire: parseFloat(document.getElementById('eTaux').value) || 0,
+        allocationARE: parseFloat(document.getElementById('eARE').value) || 0,
         ifc: parseFloat(document.getElementById('eIFC').value) || 0,
         cp: parseFloat(document.getElementById('eCP').value) || 0
       };
