@@ -112,7 +112,20 @@ const Etablissements = {
   },
 
   async renderVehicule(config) {
-    // Fetch stations proches
+    const vehicules = config.vehicules || [];
+    const vCards = vehicules.map(v => `
+      <div class="stat-card" style="cursor:pointer;margin-bottom:8px;${v.actif ? 'border-left:3px solid var(--green)' : ''}" data-vid="${v.id}">
+        <div style="display:flex;justify-content:space-between;align-items:start">
+          <div>
+            <div style="font-size:14px;font-weight:600">${v.marque} ${v.modele}</div>
+            <div style="font-size:12px;color:var(--txt2)">${v.plaque || 'Pas de plaque'} - ${v.carburant || '?'} - ${v.puissanceFiscale || '?'} CV - ${v.consommation || '?'} L/100km</div>
+          </div>
+          ${v.actif ? '<span class="badge badge-green">Actif</span>' : '<span class="badge badge-blue" style="cursor:pointer">Utiliser</span>'}
+        </div>
+      </div>
+    `).join('');
+
+    // Stations
     let stationsHTML = '';
     try {
       const data = await API.get('/api/prix-gasoil/stations');
@@ -127,11 +140,11 @@ const Etablissements = {
         stationsHTML = `
           <div style="margin-top:16px">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-              <div class="label">STATIONS LES MOINS CHERES (Saintes/Royan/Saujon)</div>
+              <div class="label">STATIONS LES MOINS CHERES</div>
               <button class="btn btn-sm btn-ghost" id="refreshPrix" style="font-size:10px">Actualiser</button>
             </div>
             <div class="table-wrap"><table>
-              <thead><tr><th>Station</th><th style="text-align:right">Prix Gazole</th></tr></thead>
+              <thead><tr><th>Station</th><th style="text-align:right">Gazole</th></tr></thead>
               <tbody>${rows}</tbody>
             </table></div>
             <div style="font-size:10px;color:var(--txt3);margin-top:4px">MAJ: ${maj} - Source: prix-carburants.gouv.fr</div>
@@ -141,29 +154,162 @@ const Etablissements = {
     } catch(e) {}
 
     document.getElementById('vehiculeSection').innerHTML = `
-      <div class="stat-card" style="max-width:400px;cursor:pointer" id="editVehicule">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div class="label">VEHICULES</div>
+        <button class="btn btn-sm btn-primary" id="addVehicule">+ Ajouter</button>
+      </div>
+      ${vCards || '<p style="color:var(--txt3);font-size:13px">Aucun vehicule</p>'}
+      <div class="stat-card" style="max-width:400px;cursor:pointer;margin-top:12px" id="editBareme">
         <div style="display:flex;justify-content:space-between;align-items:start">
           <div>
-            <div class="label">Puissance fiscale</div>
-            <div class="value" style="font-size:22px">${config.puissanceFiscale || 4} CV</div>
-          </div>
-          <div style="text-align:right">
-            <div class="label">Bareme KM</div>
-            <div class="value" style="font-size:22px;color:var(--accent2)">${config.baremeKm || 0.523} &euro;/km</div>
+            <div class="label">Bareme KM impots</div>
+            <div class="value" style="font-size:20px;color:var(--accent2)">${config.baremeKm || 0.523} &euro;/km</div>
           </div>
         </div>
       </div>
       ${stationsHTML}
     `;
-    document.getElementById('editVehicule').onclick = () => Impots.openBaremeModal(config);
+
+    document.getElementById('editBareme').onclick = () => Impots.openBaremeModal(config);
+    document.getElementById('addVehicule').onclick = () => this.openVehiculeModal(config, null);
+    document.querySelectorAll('[data-vid]').forEach(card => {
+      card.onclick = () => {
+        const v = vehicules.find(x => x.id === card.dataset.vid);
+        if (v) this.openVehiculeModal(config, v);
+      };
+    });
     const refreshBtn = document.getElementById('refreshPrix');
     if (refreshBtn) {
       refreshBtn.onclick = async (e) => {
         e.stopPropagation();
-        refreshBtn.textContent = 'Chargement...';
+        refreshBtn.textContent = '...';
         await API.post('/api/prix-gasoil/refresh', {});
         App.toast('Prix mis a jour');
-        this.renderVehicule(config);
+        this.render();
+      };
+    }
+  },
+
+  openVehiculeModal(config, vehicule) {
+    const isEdit = !!vehicule;
+    const v = vehicule || {};
+    const body = `
+      <div class="form-group">
+        <label class="form-label">Plaque d'immatriculation</label>
+        <div style="display:flex;gap:8px">
+          <input type="text" class="form-input" id="vPlaque" value="${v.plaque || ''}" placeholder="Ex: AB-123-CD" style="text-transform:uppercase;flex:1">
+          <button class="btn btn-sm btn-secondary" id="vSearch">Rechercher</button>
+        </div>
+        <div id="vSearchResult" style="font-size:11px;color:var(--txt3);margin-top:4px"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Marque</label>
+          <input type="text" class="form-input" id="vMarque" value="${v.marque || ''}" placeholder="Ex: Renault">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Modele</label>
+          <input type="text" class="form-input" id="vModele" value="${v.modele || ''}" placeholder="Ex: Megane Break">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Carburant</label>
+          <select class="form-select" id="vCarburant">
+            <option value="diesel" ${v.carburant === 'diesel' ? 'selected' : ''}>Diesel</option>
+            <option value="essence" ${v.carburant === 'essence' ? 'selected' : ''}>Essence</option>
+            <option value="electrique" ${v.carburant === 'electrique' ? 'selected' : ''}>Electrique</option>
+            <option value="hybride" ${v.carburant === 'hybride' ? 'selected' : ''}>Hybride</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Puissance fiscale (CV)</label>
+          <input type="number" class="form-input" id="vCV" value="${v.puissanceFiscale || ''}" placeholder="Ex: 4">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Consommation (L/100km)</label>
+        <input type="number" step="0.1" class="form-input" id="vConso" value="${v.consommation || ''}" placeholder="Ex: 5.5">
+      </div>
+    `;
+    const footer = `
+      ${isEdit ? '<button class="btn btn-danger" id="vDelete">Supprimer</button>' : ''}
+      ${isEdit && !v.actif ? '<button class="btn btn-secondary" id="vSetActif">Definir comme actif</button>' : ''}
+      <button class="btn btn-secondary" onclick="App.closeModal()">Annuler</button>
+      <button class="btn btn-primary" id="vSave">${isEdit ? 'Modifier' : 'Ajouter'}</button>
+    `;
+    App.openModal(isEdit ? 'Modifier le vehicule' : 'Nouveau vehicule', body, footer);
+
+    // Search by plate
+    document.getElementById('vSearch').onclick = async () => {
+      const plaque = document.getElementById('vPlaque').value.trim();
+      if (!plaque) return;
+      document.getElementById('vSearchResult').innerHTML = '<span style="color:var(--accent)">Recherche...</span>';
+      const r = await API.get('/api/vehicule/plaque/' + encodeURIComponent(plaque));
+      if (r.ok) {
+        document.getElementById('vMarque').value = r.marque;
+        document.getElementById('vModele').value = r.modele;
+        if (r.carburant) document.getElementById('vCarburant').value = r.carburant.includes('gas') ? 'diesel' : r.carburant;
+        if (r.puissanceFiscale) document.getElementById('vCV').value = r.puissanceFiscale;
+        document.getElementById('vSearchResult').innerHTML = '<span style="color:var(--green)">Trouve : ' + r.marque + ' ' + r.modele + '</span>';
+      } else {
+        document.getElementById('vSearchResult').innerHTML = '<span style="color:var(--orange)">Non trouve. Entrez manuellement.</span>';
+      }
+    };
+
+    // Save
+    document.getElementById('vSave').onclick = async () => {
+      const data = {
+        id: v.id || Date.now().toString(36),
+        plaque: document.getElementById('vPlaque').value.trim().toUpperCase(),
+        marque: document.getElementById('vMarque').value.trim(),
+        modele: document.getElementById('vModele').value.trim(),
+        carburant: document.getElementById('vCarburant').value,
+        puissanceFiscale: parseInt(document.getElementById('vCV').value) || 0,
+        consommation: parseFloat(document.getElementById('vConso').value) || 0,
+        actif: v.actif || false
+      };
+      if (!data.marque) return App.toast('Entrer la marque', 'error');
+
+      if (!config.vehicules) config.vehicules = [];
+      const i = config.vehicules.findIndex(x => x.id === data.id);
+      if (i >= 0) config.vehicules[i] = { ...config.vehicules[i], ...data };
+      else { data.actif = config.vehicules.length === 0; config.vehicules.push(data); }
+
+      // Update global config
+      const actif = config.vehicules.find(x => x.actif);
+      if (actif) {
+        config.consommation = actif.consommation;
+        config.puissanceFiscale = actif.puissanceFiscale;
+        config.vehicule = actif.marque + ' ' + actif.modele;
+      }
+      await API.config.update(config);
+      App.closeModal();
+      App.toast(isEdit ? 'Vehicule modifie' : 'Vehicule ajoute');
+      this.render();
+    };
+
+    // Delete
+    if (isEdit) {
+      const delBtn = document.getElementById('vDelete');
+      if (delBtn) delBtn.onclick = async () => {
+        config.vehicules = config.vehicules.filter(x => x.id !== v.id);
+        await API.config.update(config);
+        App.closeModal();
+        App.toast('Vehicule supprime');
+        this.render();
+      };
+      const actifBtn = document.getElementById('vSetActif');
+      if (actifBtn) actifBtn.onclick = async () => {
+        config.vehicules.forEach(x => x.actif = false);
+        const vi = config.vehicules.find(x => x.id === v.id);
+        if (vi) vi.actif = true;
+        config.consommation = vi.consommation;
+        config.puissanceFiscale = vi.puissanceFiscale;
+        await API.config.update(config);
+        App.closeModal();
+        App.toast('Vehicule actif mis a jour');
+        this.render();
       };
     }
   },

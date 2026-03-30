@@ -597,6 +597,27 @@ app.post('/api/prix-gasoil/refresh', async (req, res) => {
   });
 });
 
+// --- Recherche vehicule par plaque ---
+app.get('/api/vehicule/plaque/:plaque', async (req, res) => {
+  const plaque = req.params.plaque.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+  try {
+    // Try free API
+    const data = await fetchJSON(`https://api-plaque.com/api/get-vehicle-info?plate=${plaque}&token=free`);
+    if (data && data.data) {
+      res.json({
+        ok: true,
+        marque: data.data.marque || '',
+        modele: data.data.modele || '',
+        carburant: (data.data.energie || '').toLowerCase(),
+        puissanceFiscale: parseInt(data.data.puissance_fiscale) || 0
+      });
+      return;
+    }
+  } catch (e) {}
+  // Fallback: not found
+  res.json({ ok: false, message: 'Vehicule non trouve. Entrez les infos manuellement.' });
+});
+
 // --- Backup automatique sur NAS chaque nuit ---
 const NAS_BACKUP = '\\\\MYCLOUD-1KSKLK\\Serveur\\Caro Hublo\\Backups';
 

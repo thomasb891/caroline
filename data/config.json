@@ -1,13 +1,23 @@
 {
   "puissanceFiscale": 4,
   "baremeKm": 0.523,
-  "tauxHoraire": 12.424,
-  "indemniteFinContrat": 10,
-  "congesPayes": 10,
   "domicile": "12, Rue Jules Ferry, Les Petites Combes, Chez Sorignet, Tesson, Saintes, Charente-Maritime, Nouvelle-Aquitaine, France métropolitaine, 17460, France",
   "domicileLat": 45.630738,
   "domicileLon": -0.652319,
   "prixGasoil": 1.949,
+  "vehicules": [
+    {
+      "id": "v1",
+      "nom": "Megane",
+      "plaque": "",
+      "marque": "Renault",
+      "modele": "Megane Break Estate",
+      "carburant": "diesel",
+      "consommation": 5.5,
+      "puissanceFiscale": 4,
+      "actif": true
+    }
+  ],
   "consommation": 5.5,
   "vehicule": "Renault Megane Break Diesel Estate"
 }
