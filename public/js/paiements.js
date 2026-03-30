@@ -32,12 +32,15 @@ const Paiements = {
       let detailRows = '';
       if (moisP.length > 0) {
         detailRows = moisP.map(p => `<tr class="detail-row" data-month="${key}" style="display:none">
-          <td style="padding-left:36px;font-size:12px;color:var(--txt2)">${p.dateVersement}</td>
+          <td style="padding-left:36px;font-size:12px;color:var(--txt2)">${p.dateVersement ? p.dateVersement.split('-').reverse().join('/') : '-'}</td>
           <td style="font-size:12px">${p.etablissement}</td>
           <td class="num" style="font-size:12px">${(p.montant || 0).toFixed(2)} &euro;</td>
           <td>${p.fichePaye ? '<span class="badge badge-green">Oui</span>' : '<span class="badge badge-orange">Non</span>'}</td>
           <td>${p.finContrat ? '<span class="badge badge-blue">Oui</span>' : '-'}</td>
-          <td><button class="btn-ghost btn-sm" data-edit="${p.id}">Modifier</button></td>
+          <td style="display:flex;align-items:center;gap:6px">
+            ${p.note ? '<span title="' + p.note.replace(/"/g, '&quot;') + '" style="font-size:10px;color:var(--txt3);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + p.note + '</span>' : ''}
+            <button class="btn-ghost btn-sm" data-edit="${p.id}">Modifier</button>
+          </td>
         </tr>`).join('');
       }
 
@@ -150,6 +153,10 @@ const Paiements = {
           </label>
         </div>
       </div>
+      <div class="form-group">
+        <label class="form-label">Note</label>
+        <textarea class="form-input" id="pNote" rows="2" placeholder="Ajouter une note..." style="resize:vertical">${paiement ? paiement.note || '' : ''}</textarea>
+      </div>
     `;
 
     const footer = `
@@ -168,7 +175,8 @@ const Paiements = {
         dateVersement: document.getElementById('pDate').value,
         montant: parseFloat(document.getElementById('pMontant').value) || 0,
         fichePaye: document.getElementById('pFiche').checked,
-        finContrat: document.getElementById('pFinContrat').checked
+        finContrat: document.getElementById('pFinContrat').checked,
+        note: document.getElementById('pNote').value.trim()
       };
       if (isEdit) await API.paiements.update(paiement.id, data);
       else await API.paiements.create(data);

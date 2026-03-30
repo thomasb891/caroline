@@ -105,7 +105,7 @@ const Impots = {
           <div class="table-wrap">
             <table>
               <thead><tr>
-                <th style="width:30px" class="print-check"></th>
+                <th style="width:40px">OK</th>
                 <th>Etablissement</th>
                 <th>Nb fiches</th>
                 <th>Total recu</th>
@@ -147,11 +147,11 @@ const Impots = {
       const nbFiches = list.filter(p => p.fichePaye).length;
 
       return `<tr>
-        <td class="print-check" style="text-align:center"><div style="width:16px;height:16px;border:2px solid var(--border);border-radius:3px;display:inline-block"></div></td>
+        <td class="print-check" style="text-align:center"><input type="checkbox" class="verif-check" style="width:18px;height:18px;cursor:pointer;accent-color:var(--green)"></td>
         <td style="font-weight:500">${etab}</td>
         <td class="num">${list.length} <span style="font-size:10px;color:var(--txt3)">(${nbFiches} recues)</span></td>
         <td class="num" style="font-weight:600">${total > 0 ? total.toFixed(2) + ' &euro;' : '-'}</td>
-        <td>${last ? last.dateVersement : '-'}</td>
+        <td>${last ? this.formatDateFR(last.dateVersement) : '-'}</td>
         <td class="num">${last ? (last.montant || 0).toFixed(2) + ' &euro;' : '-'}</td>
       </tr>`;
     }).join('');
@@ -166,6 +166,13 @@ const Impots = {
       <td></td>
       <td></td>
     </tr>`;
+  },
+
+  formatDateFR(dateStr) {
+    if (!dateStr) return '-';
+    const parts = dateStr.split('-');
+    if (parts.length !== 3) return dateStr;
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
   },
 
   openBaremeModal(config) {
