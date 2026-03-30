@@ -40,17 +40,22 @@ const Etablissements = {
           <div class="etab-card" data-id="${e.id}">
             <div class="etab-name">${e.nom}</div>
             ${e.adresse ? `<div style="font-size:11px;color:var(--txt3);margin-bottom:6px">${e.adresse}</div>` : ''}
-            <span class="etab-km">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-              ${e.km} km A/R
-            </span>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">
+              <span class="etab-km">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                ${e.km} km A/R
+              </span>
+              ${e.tauxHoraire ? `<span class="etab-km" style="color:var(--green)">${e.tauxHoraire}&euro;/h</span>` : ''}
+              ${e.ifc ? `<span class="etab-km" style="color:var(--orange)">IFC ${e.ifc}%</span>` : ''}
+              ${e.cp ? `<span class="etab-km" style="color:var(--blue)">CP ${e.cp}%</span>` : ''}
+            </div>
           </div>
         `).join('')}
       </div>
 
       <div style="margin-top:40px">
         <div class="section-header">
-          <h2 class="section-title">Vehicule</h2>
+          <h2 class="section-title">Vehicule & KM</h2>
         </div>
         <div id="vehiculeSection"></div>
       </div>
@@ -154,6 +159,23 @@ const Etablissements = {
         </div>
         <div id="eKmInfo" style="font-size:11px;color:var(--txt3);margin-top:4px"></div>
       </div>
+      <div style="border-top:1px solid var(--border);margin:16px 0;padding-top:16px">
+        <div style="font-size:12px;font-weight:600;color:var(--txt2);margin-bottom:12px">REMUNERATION</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Taux horaire net (&euro;/h)</label>
+        <input type="number" step="0.001" class="form-input" id="eTaux" value="${etab ? etab.tauxHoraire || '' : ''}" placeholder="Ex: 12.424">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Indemnite fin contrat (%)</label>
+          <input type="number" step="0.1" class="form-input" id="eIFC" value="${etab ? etab.ifc || '' : ''}" placeholder="10">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Conges payes (%)</label>
+          <input type="number" step="0.1" class="form-input" id="eCP" value="${etab ? etab.cp || '' : ''}" placeholder="10">
+        </div>
+      </div>
     `;
     const footer = `
       ${isEdit ? '<button class="btn btn-danger" id="eDelete">Supprimer</button>' : ''}
@@ -180,7 +202,10 @@ const Etablissements = {
       const adresse = document.getElementById('eAdresse').value.trim();
       const lat = document.getElementById('eLat').value;
       const lon = document.getElementById('eLon').value;
-      const data = { nom, km, adresse, lat: lat ? parseFloat(lat) : null, lon: lon ? parseFloat(lon) : null };
+      const tauxHoraire = parseFloat(document.getElementById('eTaux').value) || 0;
+      const ifc = parseFloat(document.getElementById('eIFC').value) || 0;
+      const cp = parseFloat(document.getElementById('eCP').value) || 0;
+      const data = { nom, km, adresse, lat: lat ? parseFloat(lat) : null, lon: lon ? parseFloat(lon) : null, tauxHoraire, ifc, cp };
       if (isEdit) await API.etablissements.update(etab.id, data);
       else await API.etablissements.create(data);
       App.closeModal();

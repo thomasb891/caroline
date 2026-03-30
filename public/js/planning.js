@@ -17,9 +17,26 @@ const Planning = {
     const totalH = missions.reduce((s, m) => s + (m.heuresTravaillees || 0), 0);
     const totalKm = missions.reduce((s, m) => s + (m.km || 0), 0);
 
-    // Estimation salaire : utilise le taux horaire net stocke dans les missions
-    const salaireNet = missions.length > 0 ? (missions[0].salaireNet || 0) : 0;
-    const estimSalaire = totalH * salaireNet;
+    // Estimation salaire par etablissement (taux/IFC/CP propres a chaque etab)
+    const etabMap = {};
+    etabs.forEach(e => { etabMap[e.nom] = e; });
+    let estimTotal = 0;
+    let salaireBase = 0;
+    let totalIFC = 0;
+    let totalCP = 0;
+    missions.forEach(m => {
+      const e = etabMap[m.etablissement];
+      const taux = e && e.tauxHoraire ? e.tauxHoraire : 0;
+      const ifcPct = e && e.ifc ? e.ifc : 0;
+      const cpPct = e && e.cp ? e.cp : 0;
+      const base = (m.heuresTravaillees || 0) * taux;
+      const ifc = base * ifcPct / 100;
+      const cp = (base + ifc) * cpPct / 100;
+      salaireBase += base;
+      totalIFC += ifc;
+      totalCP += cp;
+      estimTotal += base + ifc + cp;
+    });
 
     const page = document.getElementById('page-planning');
     page.innerHTML = `
@@ -34,8 +51,8 @@ const Planning = {
         </div>
         <div class="stat-card green">
           <div class="label">Estimation salaire</div>
-          <div class="value">${estimSalaire.toFixed(2)} &euro;</div>
-          <div class="sub">${salaireNet.toFixed(2)} &euro;/h net x ${totalH.toFixed(1)}h</div>
+          <div class="value">${estimTotal.toFixed(2)} &euro;</div>
+          <div class="sub">Base ${salaireBase.toFixed(0)}&euro; + IFC ${totalIFC.toFixed(0)}&euro; + CP ${totalCP.toFixed(0)}&euro;</div>
         </div>
         <div class="stat-card orange">
           <div class="label">Kilometres</div>
