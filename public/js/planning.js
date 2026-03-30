@@ -96,15 +96,26 @@ const Planning = {
     const totalKm = workMissions.reduce((s, m) => s + (m.km || 0), 0);
 
     // Estimation salaire par etablissement (taux/IFC/CP propres a chaque etab)
+    // Match souple : trim, ignore suffixes km, parentheses
     const etabMap = {};
     etabs.forEach(e => { etabMap[e.nom] = e; });
+    const findEtab = (name) => {
+      if (!name) return null;
+      const n = name.trim();
+      if (etabMap[n]) return etabMap[n];
+      // Fuzzy match: check if etab name is contained in mission name or vice versa
+      return etabs.find(e => {
+        const en = e.nom.replace(/\s*[\d,]+\s*km.*$/i, '').trim();
+        return n.includes(en) || en.includes(n.replace(/\s*\(.*\)/, '').trim());
+      }) || null;
+    };
     let estimTotal = 0;
     let salaireBase = 0;
     let totalIFC = 0;
     let totalCP = 0;
     let totalPrimes = 0;
     workMissions.forEach(m => {
-      const e = etabMap[m.etablissement];
+      const e = findEtab(m.etablissement);
       const taux = e && e.tauxHoraire ? e.tauxHoraire : 0;
       const hDebut = parseInt((m.heureDebut || '08:00').split(':')[0]);
       const estNuit = m.horaire === 'nuit' || (hDebut >= 21 || hDebut < 6);
@@ -177,7 +188,7 @@ const Planning = {
             workMissions.forEach(m => {
               const nom = m.etablissement || '?';
               if (!byEtab[nom]) byEtab[nom] = { heures: 0, base: 0, primeNuit: 0, primeDim: 0, ifc: 0, cp: 0, total: 0, taux: 0 };
-              const e = etabMap[nom];
+              const e = findEtab(nom);
               const taux = e && e.tauxHoraire ? e.tauxHoraire : 0;
               const hDebut = parseInt((m.heureDebut || '08:00').split(':')[0]);
               const estNuit = m.horaire === 'nuit' || (hDebut >= 21 || hDebut < 6);
