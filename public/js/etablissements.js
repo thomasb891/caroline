@@ -367,6 +367,18 @@ const Etablissements = {
     const input = document.getElementById(inputId);
     const container = document.getElementById(suggestionsId);
 
+    const renderResults = (results) => {
+      container.innerHTML = results.map(r => `
+        <div class="suggestion-item" data-lat="${r.lat}" data-lon="${r.lon}" data-name="${r.label.replace(/"/g, '&quot;')}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;flex-shrink:0;color:var(--txt3)"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <span>${r.label}</span>
+        </div>
+      `).join('');
+      container.querySelectorAll('.suggestion-item').forEach(item => {
+        item.onclick = () => onSelect({ display_name: item.dataset.name, lat: item.dataset.lat, lon: item.dataset.lon });
+      });
+    };
+
     input.addEventListener('input', () => {
       clearTimeout(this.searchTimeout);
       const q = input.value.trim();
@@ -374,21 +386,25 @@ const Etablissements = {
 
       this.searchTimeout = setTimeout(async () => {
         try {
-          // Nominatim for places/buildings (EHPAD, residences, cliniques...)
-          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=fr&limit=5&addressdetails=1`, {
+          // 1) Try Nominatim (finds named places like EHPAD, residences)
+          const res1 = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=fr&limit=5`, {
             headers: { 'Accept-Language': 'fr' }
           });
-          const results = await res.json();
-          if (!results.length) { container.innerHTML = '<div style="padding:8px;font-size:12px;color:var(--txt3)">Aucun resultat</div>'; return; }
-          container.innerHTML = results.map(r => `
-            <div class="suggestion-item" data-lat="${r.lat}" data-lon="${r.lon}" data-name="${r.display_name.replace(/"/g, '&quot;')}">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;flex-shrink:0;color:var(--txt3)"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-              <span>${r.display_name}</span>
-            </div>
-          `).join('');
-          container.querySelectorAll('.suggestion-item').forEach(item => {
-            item.onclick = () => onSelect({ display_name: item.dataset.name, lat: item.dataset.lat, lon: item.dataset.lon });
-          });
+          const nominatim = await res1.json();
+          if (nominatim.length) {
+            renderResults(nominatim.map(r => ({ label: r.display_name, lat: r.lat, lon: r.lon })));
+            return;
+          }
+
+          // 2) Fallback: API adresse.data.gouv.fr (for street addresses)
+          const res2 = await fetch(`https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(q)}&limit=5`);
+          const gouv = await res2.json();
+          if (gouv.features && gouv.features.length) {
+            renderResults(gouv.features.map(f => ({ label: f.properties.label, lat: f.geometry.coordinates[1], lon: f.geometry.coordinates[0] })));
+            return;
+          }
+
+          container.innerHTML = '<div style="padding:8px;font-size:12px;color:var(--txt3)">Aucun resultat - entrez l\'adresse manuellement</div>';
         } catch (e) {
           container.innerHTML = '<div style="padding:8px;font-size:12px;color:var(--red)">Erreur de recherche</div>';
         }
