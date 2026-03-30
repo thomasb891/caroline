@@ -154,20 +154,6 @@ const Paiements = {
           <input type="number" step="0.01" class="form-input" id="pMontant" value="${paiement ? paiement.montant || '' : ''}" placeholder="0.00">
         </div>
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-check">
-            <input type="checkbox" id="pFiche" ${paiement && paiement.fichePaye ? 'checked' : ''}>
-            Fiche de paie recue
-          </label>
-        </div>
-        <div class="form-group">
-          <label class="form-check">
-            <input type="checkbox" id="pFinContrat" ${paiement && paiement.finContrat ? 'checked' : ''}>
-            Fin de contrat
-          </label>
-        </div>
-      </div>
       <div class="form-group">
         <label class="form-label">Note</label>
         <textarea class="form-input" id="pNote" rows="2" placeholder="Ajouter une note..." style="resize:vertical">${paiement ? paiement.note || '' : ''}</textarea>
@@ -189,8 +175,6 @@ const Paiements = {
         etablissement: etab,
         dateVersement: document.getElementById('pDate').value,
         montant: parseFloat(document.getElementById('pMontant').value) || 0,
-        fichePaye: document.getElementById('pFiche').checked,
-        finContrat: document.getElementById('pFinContrat').checked,
         note: document.getElementById('pNote').value.trim()
       };
       if (isEdit) await API.paiements.update(paiement.id, data);

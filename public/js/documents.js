@@ -33,6 +33,12 @@ const Documents = {
     docs.forEach(d => { docsMap[d.etablissement] = d; });
 
     const check = (v) => v ? '<span style="color:var(--green);font-size:16px">&#10003;</span>' : '<span style="color:var(--red);font-size:14px">&#10007;</span>';
+    const supportIcon = (d, field) => {
+      if (!d || !d.details) return '';
+      const det = d.details.find(x => x.type === field);
+      if (!det) return '';
+      return det.support === 'papier' ? '<span style="font-size:9px;color:var(--txt3)">papier</span>' : '<span style="font-size:9px;color:var(--blue)">reseau</span>';
+    };
 
     const page = document.getElementById('page-documents');
 
@@ -61,11 +67,11 @@ const Documents = {
         : '<span class="badge badge-red">Manque : ' + manquants.map(k => docNames[k]).join(', ') + '</span>';
       return `<tr class="doc-row" data-etab="${etabNom}" style="cursor:pointer">
         <td style="font-weight:500">${etabNom}</td>
-        <td style="text-align:center">${check(d.fichePaye)}</td>
-        <td style="text-align:center">${check(d.contrat)}</td>
-        <td style="text-align:center">${check(d.finContrat)}</td>
-        <td style="text-align:center">${check(d.attestation)}</td>
-        <td style="text-align:center">${check(d.solde)}</td>
+        <td style="text-align:center">${check(d.fichePaye)}<br>${supportIcon(d, 'fichePaye')}</td>
+        <td style="text-align:center">${check(d.contrat)}<br>${supportIcon(d, 'contrat')}</td>
+        <td style="text-align:center">${check(d.finContrat)}<br>${supportIcon(d, 'finContrat')}</td>
+        <td style="text-align:center">${check(d.attestation)}<br>${supportIcon(d, 'attestation')}</td>
+        <td style="text-align:center">${check(d.solde)}<br>${supportIcon(d, 'solde')}</td>
         <td>${statusHTML}</td>
       </tr>`;
     }).join('');
@@ -246,13 +252,13 @@ const Documents = {
   },
 
   async openUploadModal() {
+    const ABSENCES = ['timeo', 'timéo', 'hotel', 'hôtel', 'rdv', 'stage', 'ecole', 'école'];
     const etabs = await API.etablissements.list();
-    const etabOptions = etabs.map(e => `<option value="${e.nom}">${e.nom}</option>`).join('');
+    const workEtabs = etabs.filter(e => !ABSENCES.some(a => (e.nom || '').toLowerCase().includes(a)));
+    const etabOptions = workEtabs.map(e => `<option value="${e.nom}">${e.nom}</option>`).join('');
     const currentYear = new Date().getFullYear();
     const yearOptions = [];
-    for (let y = currentYear; y >= currentYear - 3; y--) {
-      yearOptions.push(`<option value="${y}">${y}</option>`);
-    }
+    for (let y = currentYear; y >= currentYear - 3; y--) yearOptions.push(`<option value="${y}">${y}</option>`);
     const moisOptions = ['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre']
       .map((n, i) => `<option value="${String(i+1).padStart(2,'0')}">${n}</option>`).join('');
 
@@ -271,17 +277,31 @@ const Documents = {
           <select class="form-select" id="ulMois">${moisOptions}</select>
         </div>
       </div>
-      <div style="border-top:1px solid var(--border);margin:12px 0;padding-top:12px">
-        <div style="font-size:12px;font-weight:600;color:var(--txt2);margin-bottom:8px">TYPE DE DOCUMENT</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          <label class="form-check"><input type="checkbox" id="ulFichePaye"> Fiche de paie</label>
-          <label class="form-check"><input type="checkbox" id="ulContrat"> Contrat de travail</label>
-          <label class="form-check"><input type="checkbox" id="ulFinContrat"> Certificat fin contrat</label>
-          <label class="form-check"><input type="checkbox" id="ulAttestation"> Attestation employeur</label>
-          <label class="form-check"><input type="checkbox" id="ulSolde"> Solde de tout compte</label>
+      <div class="form-group">
+        <label class="form-label">Type de document</label>
+        <select class="form-select" id="ulTypeDoc">
+          <option value="">Choisir...</option>
+          <option value="fichePaye">Fiche de paie</option>
+          <option value="contrat">Contrat de travail</option>
+          <option value="finContrat">Certificat de fin de contrat</option>
+          <option value="attestation">Attestation employeur</option>
+          <option value="solde">Solde de tout compte</option>
+          <option value="polEmploi">Document Pole Emploi</option>
+          <option value="autre">Autre document</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Recu comment ?</label>
+        <div style="display:flex;gap:12px">
+          <label class="form-check" style="flex:1;padding:10px;background:rgba(0,0,0,0.2);border-radius:8px;justify-content:center">
+            <input type="radio" name="ulSupport" value="numerique" checked style="accent-color:var(--accent)"> Numerique (scanner/envoyer)
+          </label>
+          <label class="form-check" style="flex:1;padding:10px;background:rgba(0,0,0,0.2);border-radius:8px;justify-content:center">
+            <input type="radio" name="ulSupport" value="papier" style="accent-color:var(--accent)"> Papier (recu en main)
+          </label>
         </div>
       </div>
-      <div class="form-group" style="margin-top:12px">
+      <div id="ulFileGroup" class="form-group" style="margin-top:8px">
         <label class="form-label">Fichier (PDF ou image)</label>
         <input type="file" class="form-input" id="ulFile" accept=".pdf,.jpg,.jpeg,.png,.gif,.webp" style="padding:8px">
       </div>
@@ -291,32 +311,41 @@ const Documents = {
         </div>
         <div id="ulProgressText" style="font-size:11px;color:var(--txt2);margin-top:4px">Envoi en cours...</div>
       </div>
-      <div id="ulSuccess" style="display:none;margin-top:12px;padding:12px;background:rgba(76,175,80,0.15);border-radius:8px;color:var(--green);font-weight:500;text-align:center">
-        Document envoye avec succes !
-      </div>
+      <div id="ulSuccess" style="display:none;margin-top:12px;padding:12px;background:rgba(76,175,80,0.15);border-radius:8px;color:var(--green);font-weight:500;text-align:center"></div>
     `;
     const footer = `
       <button class="btn btn-secondary" onclick="App.closeModal()">Fermer</button>
-      <button class="btn btn-primary" id="ulSend">Envoyer</button>
+      <button class="btn btn-primary" id="ulSend">Enregistrer</button>
     `;
-    App.openModal('Envoyer un document', body, footer);
+    App.openModal('Nouveau document', body, footer);
+
+    // Toggle file input based on support
+    document.querySelectorAll('input[name="ulSupport"]').forEach(r => {
+      r.onchange = () => {
+        document.getElementById('ulFileGroup').style.display = r.value === 'papier' && r.checked ? 'none' : 'block';
+      };
+    });
 
     document.getElementById('ulSend').onclick = async () => {
       const etab = document.getElementById('ulEtab').value;
       const annee = document.getElementById('ulAnnee').value;
       const mois = document.getElementById('ulMois').value;
+      const typeDoc = document.getElementById('ulTypeDoc').value;
+      const support = document.querySelector('input[name="ulSupport"]:checked').value;
       const file = document.getElementById('ulFile').files[0];
 
       if (!etab) return App.toast('Choisir un etablissement', 'error');
-      if (!file) return App.toast('Choisir un fichier', 'error');
+      if (!typeDoc) return App.toast('Choisir le type de document', 'error');
+      if (support === 'numerique' && !file) return App.toast('Choisir un fichier', 'error');
 
       const formData = new FormData();
       formData.append('etablissement', etab);
       formData.append('annee', annee);
       formData.append('mois', mois);
-      formData.append('file', file);
+      formData.append('typeDoc', typeDoc);
+      formData.append('support', support);
+      if (file) formData.append('file', file);
 
-      // Show progress
       document.getElementById('ulProgress').style.display = 'block';
       document.getElementById('ulSuccess').style.display = 'none';
       document.getElementById('ulSend').disabled = true;
@@ -328,23 +357,15 @@ const Documents = {
         document.getElementById('ulProgressBar').style.width = '100%';
 
         if (result.ok) {
-          // Update document tracking
-          const moisKey = `${annee}-${mois}`;
-          const docUpdate = { mois: moisKey, etablissement: etab };
-          if (document.getElementById('ulFichePaye').checked) docUpdate.fichePaye = true;
-          if (document.getElementById('ulContrat').checked) docUpdate.contrat = true;
-          if (document.getElementById('ulFinContrat').checked) docUpdate.finContrat = true;
-          if (document.getElementById('ulAttestation').checked) docUpdate.attestation = true;
-          if (document.getElementById('ulSolde').checked) docUpdate.solde = true;
-          // Only update if at least one checkbox
-          if (Object.keys(docUpdate).length > 2) {
-            await API.documents.save(docUpdate);
-          }
-
+          const typeLabels = { fichePaye:'Fiche de paie', contrat:'Contrat', finContrat:'Fin de contrat', attestation:'Attestation', solde:'Solde', polEmploi:'Pole Emploi', autre:'Autre' };
+          const msg = support === 'papier'
+            ? `${typeLabels[typeDoc]} (papier) enregistre pour ${etab}`
+            : `${typeLabels[typeDoc]} envoye sur le reseau pour ${etab}`;
           document.getElementById('ulProgressText').textContent = 'Termine !';
+          document.getElementById('ulSuccess').textContent = msg;
           document.getElementById('ulSuccess').style.display = 'block';
           document.getElementById('ulProgress').style.display = 'none';
-          App.toast('Document envoye et suivi mis a jour');
+          App.toast(msg);
           this.render();
         } else {
           App.toast(result.error || 'Erreur lors de l\'envoi', 'error');

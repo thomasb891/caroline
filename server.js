@@ -300,8 +300,83 @@ const upload = multer({
 });
 
 app.post('/api/documents/upload', upload.single('file'), (req, res) => {
-  if (!req.file) return res.status(400).json({ error: 'Fichier manquant ou type non supporte' });
-  res.json({ ok: true, path: req.file.path, filename: req.file.filename });
+  const { etablissement, annee, mois, typeDoc, support } = req.body;
+  if (!etablissement || !annee || !mois || !typeDoc) {
+    return res.status(400).json({ error: 'Champs manquants' });
+  }
+
+  // Type doc labels for filename
+  const typeLabels = {
+    fichePaye: 'Fiche_de_paie',
+    contrat: 'Contrat',
+    finContrat: 'Fin_de_contrat',
+    attestation: 'Attestation_employeur',
+    solde: 'Solde_tout_compte',
+    polEmploi: 'Document_Pole_Emploi',
+    autre: 'Autre'
+  };
+  const typeLabel = typeLabels[typeDoc] || typeDoc;
+  const moisNoms = ['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
+  const moisLabel = moisNoms[parseInt(mois) - 1] || mois;
+
+  // Target directory
+  const cleanEtab = etablissement.replace(/[<>:"/\\|?*]/g, '_').replace(/\s+/g, '_');
+  const destDir = path.join('\\\\MYCLOUD-1KSKLK', 'Serveur', 'Caro Hublo', 'Documents', cleanEtab, annee, moisLabel);
+
+  let savedPath = null;
+  if (req.file && support !== 'papier') {
+    // Create directory
+    try { fs.mkdirSync(destDir, { recursive: true }); } catch (e) {}
+
+    // Find next number (01, 02, ...) for this type
+    let num = 1;
+    try {
+      const existing = fs.readdirSync(destDir).filter(f => f.startsWith(typeLabel));
+      num = existing.length + 1;
+    } catch (e) {}
+
+    const ext = path.extname(req.file.originalname).toLowerCase();
+    const newName = `${typeLabel}_${cleanEtab}_${moisLabel}_${annee}_${String(num).padStart(2, '0')}${ext}`;
+    const destPath = path.join(destDir, newName);
+
+    // Move file
+    try {
+      fs.copyFileSync(req.file.path, destPath);
+      fs.unlinkSync(req.file.path);
+      savedPath = destPath;
+    } catch (e) {
+      savedPath = req.file.path; // keep in uploads if NAS not accessible
+    }
+  }
+
+  // Update document tracking
+  const moisKey = `${annee}-${mois}`;
+  let docs = readJSON('documents.json');
+  let doc = docs.find(d => d.mois === moisKey && d.etablissement === etablissement);
+  if (!doc) {
+    doc = { id: uid(), mois: moisKey, etablissement };
+    docs.push(doc);
+  }
+  // Set the document type as received
+  if (typeDoc === 'fichePaye') doc.fichePaye = true;
+  if (typeDoc === 'contrat') doc.contrat = true;
+  if (typeDoc === 'finContrat') doc.finContrat = true;
+  if (typeDoc === 'attestation') doc.attestation = true;
+  if (typeDoc === 'solde') doc.solde = true;
+
+  // Track support (papier/numerique)
+  if (!doc.details) doc.details = [];
+  doc.details.push({
+    type: typeDoc,
+    typeLabel,
+    support: support || 'numerique',
+    date: new Date().toISOString(),
+    fichier: savedPath ? path.basename(savedPath) : null,
+    chemin: savedPath
+  });
+
+  writeJSON('documents.json', docs);
+  res.json({ ok: true, path: savedPath, filename: savedPath ? path.basename(savedPath) : null });
 });
 
 // --- Comparaison Impots ---
