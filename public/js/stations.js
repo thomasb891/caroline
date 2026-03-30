@@ -42,11 +42,32 @@ const Stations = {
 
     const page = document.getElementById('page-stations');
 
-    const trajets = {
-      'Trajet Royan': { desc: 'Issambres, Harmonie, Aloes, Oceane', villes: ['Royan', 'Breuillet', 'Saint-Sulpice', 'Arvert', 'Les Mathes', 'Le Gua', 'Saint-Georges'] },
-      'Trajet Saintes': { desc: 'Jardins, Clinique, Petites Soeurs', villes: ['Saintes', 'Saint-Savinien'] },
-      'Trajet Saujon': { desc: 'Sud Saintonge', villes: ['Saujon', 'Pons'] },
+    // Trajets dynamiques : seulement les zones ou Caroline travaille (3 derniers mois)
+    const now3m = new Date();
+    now3m.setMonth(now3m.getMonth() - 3);
+    const recentMissions = await API.missions.listAnnee(now.getFullYear().toString());
+    const recentEtabs = [...new Set(
+      recentMissions
+        .filter(m => m.date >= now3m.toISOString().slice(0, 10) && !isAbs(m.etablissement))
+        .map(m => m.etablissement)
+    )];
+
+    const allTrajets = {
+      'Royan': { keywords: ['Issambres', 'Harmonie', 'Aloes', 'Oceane', 'Royan'], villes: ['Royan', 'Breuillet', 'Saint-Sulpice', 'Arvert', 'Les Mathes', 'Le Gua', 'Saint-Georges'] },
+      'Saintes': { keywords: ['Jardins', 'Clinique', 'Petites', 'Domaine', 'Pervenches', 'Saintes'], villes: ['Saintes', 'Saint-Savinien'] },
+      'Saujon': { keywords: ['Sud Saintonge', 'Saujon', 'Saint Romain'], villes: ['Saujon', 'Pons'] },
+      'St Porchaire': { keywords: ['Moulin', 'Porchaire'], villes: ['Saint-Porchaire'] },
+      'Floirac': { keywords: ['Florius'], villes: ['Floirac'] },
     };
+
+    // Filtrer : garder seulement les trajets ou Caroline va
+    const trajets = {};
+    for (const [zone, info] of Object.entries(allTrajets)) {
+      const etabsInZone = recentEtabs.filter(e => info.keywords.some(k => e.toLowerCase().includes(k.toLowerCase())));
+      if (etabsInZone.length > 0) {
+        trajets['Trajet ' + zone] = { desc: etabsInZone.map(e => e.replace(/\s*\(.*\)/, '').trim().split(' ').slice(0,3).join(' ')).join(', '), villes: info.villes };
+      }
+    }
 
     let zoneCards = '';
     if (data.stations && data.stations.length) {
