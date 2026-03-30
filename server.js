@@ -541,19 +541,27 @@ async function updatePrixGasoil() {
     const lat = config.domicileLat || 45.6307;
     const lon = config.domicileLon || -0.6523;
 
-    // Chercher dans un rayon de 50km pour couvrir Saintes, Royan et Saujon
-    const url = `https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/prix-des-carburants-en-france-flux-instantane-v2/records?limit=15&refine=carburants_disponibles%3AGazole&where=distance(geom%2C%20geom'POINT(${lon}%20${lat})'%2C%2050km)%20and%20gazole_prix%20is%20not%20null&select=id%2Cadresse%2Cville%2Cgazole_prix%2Cgazole_maj&order_by=gazole_prix%20asc`;
+    // Determiner le carburant du vehicule actif
+    const vehiculeActif = (config.vehicules || []).find(v => v.actif);
+    const carburant = vehiculeActif && vehiculeActif.carburant === 'essence' ? 'e10' : 'gazole';
+    const carburantLabel = carburant === 'e10' ? 'E10' : 'Gazole';
+    const carburantRefine = carburant === 'e10' ? 'E10' : 'Gazole';
+    const prixField = carburant === 'e10' ? 'e10_prix' : 'gazole_prix';
+    const majField = carburant === 'e10' ? 'e10_maj' : 'gazole_maj';
+
+    console.log(`[Prix Gasoil] Recherche ${carburantLabel} pour ${vehiculeActif ? vehiculeActif.marque + ' ' + vehiculeActif.modele : 'vehicule inconnu'}`);
+
+    const url = `https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/prix-des-carburants-en-france-flux-instantane-v2/records?limit=15&refine=carburants_disponibles%3A${carburantRefine}&where=distance(geom%2C%20geom'POINT(${lon}%20${lat})'%2C%2050km)%20and%20${prixField}%20is%20not%20null&select=id%2Cadresse%2Cville%2C${prixField}%2C${majField}&order_by=${prixField}%20asc`;
 
     const data = await fetchJSON(url);
     if (!data.results || !data.results.length) return;
 
-    // Filtrer les stations dont la MAJ est de moins de 7 jours
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
     const stationsRaw = data.results
-      .filter(s => s.gazole_maj && s.gazole_maj > sevenDaysAgo);
+      .filter(s => s[majField] && s[majField] > sevenDaysAgo);
 
     const stations = stationsRaw.slice(0, 10).map(s => ({
-      id: s.id, prix: s.gazole_prix, adresse: s.adresse, ville: s.ville, maj: s.gazole_maj, nom: ''
+      id: s.id, prix: s[prixField], adresse: s.adresse, ville: s.ville, maj: s[majField], nom: '', carburant: carburantLabel
     }));
 
     // Noms : cache local + scraping seulement pour les nouvelles stations
@@ -590,12 +598,13 @@ async function updatePrixGasoil() {
     });
 
     const moinsChere = stations[0];
-    console.log(`[Prix Gasoil] Le moins cher: ${moinsChere.prix} EUR/L - ${moinsChere.adresse}, ${moinsChere.ville}`);
+    console.log(`[Prix ${carburantLabel}] Le moins cher: ${moinsChere.prix} EUR/L - ${moinsChere.adresse}, ${moinsChere.ville}`);
 
     // Sauvegarder le prix le moins cher
     config.prixGasoil = moinsChere.prix;
     config.prixGasoilStation = `${moinsChere.adresse}, ${moinsChere.ville}`;
     config.prixGasoilMaj = new Date().toISOString();
+    config.carburantRecherche = carburantLabel;
     config.stationsProches = stations.slice(0, 5);
     config.stationsParZone = zones;
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2));

@@ -154,7 +154,7 @@ const Stations = {
         <h2 class="section-title">Toutes les stations (50km)</h2>
       </div>
       <div class="table-wrap"><table>
-        <thead><tr><th>Enseigne</th><th>Adresse</th><th style="text-align:right">Gazole</th><th>MAJ</th></tr></thead>
+        <thead><tr><th>Enseigne</th><th>Adresse</th><th style="text-align:right">${data.stations && data.stations[0] && data.stations[0].carburant ? data.stations[0].carburant : 'Prix'}</th><th>MAJ</th></tr></thead>
         <tbody>${allRows}</tbody>
       </table></div>
       <div style="text-align:center;padding:20px;font-size:11px;color:var(--txt3)">&copy; Thomas</div>
