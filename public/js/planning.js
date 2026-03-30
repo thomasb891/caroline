@@ -254,7 +254,7 @@ const Planning = {
   openMissionModal(date, mission = null) {
     const isEdit = !!mission;
     const etabOptions = this.etablissements.map(e =>
-      `<option value="${e.nom}" data-km="${e.km}" ${mission && mission.etablissement === e.nom ? 'selected' : ''}>${e.nom} (${e.km} km)</option>`
+      `<option value="${e.nom}" data-km="${e.km}" ${mission && mission.etablissement === e.nom ? 'selected' : ''}>${e.nom}</option>`
     ).join('');
 
     const dateLabel = new Date(date + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
