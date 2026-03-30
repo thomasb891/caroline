@@ -105,7 +105,9 @@ const Planning = {
     workMissions.forEach(m => {
       const e = etabMap[m.etablissement];
       const taux = e && e.tauxHoraire ? e.tauxHoraire : 0;
-      const primeNuit = (m.horaire === 'nuit' && e && e.primeNuit) ? e.primeNuit : 0;
+      const hDebut = parseInt((m.heureDebut || '08:00').split(':')[0]);
+      const estNuit = m.horaire === 'nuit' || (hDebut >= 21 || hDebut < 6);
+      const primeNuit = (estNuit && e && e.primeNuit) ? e.primeNuit : 0;
       const ifcPct = e && e.ifc ? e.ifc : 0;
       const cpPct = e && e.cp ? e.cp : 0;
       const heures = m.heuresTravaillees || 0;
@@ -228,7 +230,8 @@ const Planning = {
         const isStage = name.toLowerCase().includes('stage');
         const absent = this._isAbsence(name);
         const hours = m.heuresTravaillees && !absent ? `${m.heuresTravaillees.toFixed(1)}h` : '';
-        const isNuit = m.horaire === 'nuit';
+        const hd = parseInt((m.heureDebut || '08:00').split(':')[0]);
+        const isNuit = m.horaire === 'nuit' || (hd >= 21 || hd < 6);
         const color = etabColor(name);
         const borderStyle = !isStage && !absent ? `border-left:3px solid ${color};` : '';
         const dot = !isStage && !absent ? `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${color};margin-right:3px;flex-shrink:0"></span>` : '';
@@ -407,7 +410,7 @@ const Planning = {
         typeContrat: document.getElementById('mContrat').value,
         horaire: (() => {
           const h = parseInt((debut || '00:00').split(':')[0]);
-          return (h >= 19 || h < 7) ? 'nuit' : 'jour';
+          return (h >= 21 || h < 6) ? 'nuit' : 'jour';
         })()
       };
 
