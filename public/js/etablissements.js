@@ -206,22 +206,26 @@ const Etablissements = {
           <option value="stage" ${etab && etab.typeContrat === 'stage' ? 'selected' : ''}>Stage</option>
         </select>
       </div>
-      <div class="form-group" id="eTauxGroup">
-        <label class="form-label" id="eTauxLabel">Taux horaire net (&euro;/h)</label>
-        <input type="number" step="0.001" class="form-input" id="eTaux" value="${etab ? etab.tauxHoraire || '' : ''}" placeholder="Ex: 12.424">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Allocation journaliere ARE (&euro;/jour)</label>
-        <input type="number" step="0.01" class="form-input" id="eARE" value="${etab ? etab.allocationARE || '' : ''}" placeholder="Ex: 48.64 (Pole Emploi uniquement)">
-      </div>
-      <div class="form-row">
+      <div id="remuEtab">
         <div class="form-group">
-          <label class="form-label">Indemnite fin contrat (%)</label>
-          <input type="number" step="0.1" class="form-input" id="eIFC" value="${etab ? etab.ifc || '' : ''}" placeholder="10">
+          <label class="form-label">Taux horaire net (&euro;/h)</label>
+          <input type="number" step="0.001" class="form-input" id="eTaux" value="${etab ? etab.tauxHoraire || '' : ''}" placeholder="Ex: 12.424">
         </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Indemnite fin contrat (%)</label>
+            <input type="number" step="0.1" class="form-input" id="eIFC" value="${etab ? etab.ifc || '' : ''}" placeholder="10">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Conges payes (%)</label>
+            <input type="number" step="0.1" class="form-input" id="eCP" value="${etab ? etab.cp || '' : ''}" placeholder="10">
+        </div>
+      </div>
+      </div>
+      <div id="remuPE" style="display:none">
         <div class="form-group">
-          <label class="form-label">Conges payes (%)</label>
-          <input type="number" step="0.1" class="form-input" id="eCP" value="${etab ? etab.cp || '' : ''}" placeholder="10">
+          <label class="form-label">Allocation journaliere ARE (&euro;/jour)</label>
+          <input type="number" step="0.01" class="form-input" id="eARE" value="${etab ? etab.allocationARE || '' : ''}" placeholder="Ex: 48.64">
         </div>
       </div>
     `;
@@ -231,6 +235,16 @@ const Etablissements = {
       <button class="btn btn-primary" id="eSave">${isEdit ? 'Modifier' : 'Ajouter'}</button>
     `;
     App.openModal(isEdit ? 'Modifier l\'etablissement' : 'Nouvel etablissement', body, footer);
+
+    // Toggle remuneration fields based on name (Pole Emploi vs other)
+    const updateRemuFields = () => {
+      const nom = (document.getElementById('eNom').value || '').toLowerCase();
+      const isPE = nom.includes('emploi') || nom.includes('pole');
+      document.getElementById('remuEtab').style.display = isPE ? 'none' : 'block';
+      document.getElementById('remuPE').style.display = isPE ? 'block' : 'none';
+    };
+    document.getElementById('eNom').addEventListener('input', updateRemuFields);
+    updateRemuFields();
 
     // Auto-search address when typing establishment name
     this.setupAddressSearch('eNom', 'eNomSuggestions', (place) => {
