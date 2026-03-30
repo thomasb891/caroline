@@ -191,10 +191,10 @@ const Planning = {
           ${(() => {
             const byEtab = {};
             workMissions.forEach(m => {
-              const nom = m.etablissement || '?';
+              const nom = (m.etablissement || '?').trim();
               if (!byEtab[nom]) byEtab[nom] = { heures: 0, base: 0, primeNuit: 0, primeDim: 0, ifc: 0, cp: 0, total: 0, taux: 0 };
               const e = findEtab(nom);
-              const taux = e && e.tauxHoraire ? e.tauxHoraire : 0;
+              const taux = e ? (e.tauxHoraire || 0) + (e.segur || 0) : 0;
               const hDebut = parseInt((m.heureDebut || '08:00').split(':')[0]);
               const estNuit = m.horaire === 'nuit' || (hDebut >= 21 || hDebut < 6);
               const pNuit = (estNuit && e && e.primeNuit) ? e.primeNuit : 0;
