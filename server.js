@@ -338,7 +338,7 @@ app.post('/api/documents/upload', upload.single('file'), (req, res) => {
       } catch (e) {}
 
       const ext = path.extname(req.file.originalname).toLowerCase();
-      const newName = `${allTypeLabels}_${cleanEtab}_${moisLabel}_${annee}_${String(num).padStart(2, '0')}${ext}`;
+      const newName = `${allTypeLabels}_${moisLabel}_${annee}_${String(num).padStart(2, '0')}${ext}`;
       const destPath = path.join(nasBase, newName);
 
       try {
