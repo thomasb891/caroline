@@ -206,18 +206,18 @@ const Planning = {
               Object.entries(byEtab).sort((a,b) => b[1].total - a[1].total).map(([nom, d]) => {
                 const primes = d.primeNuit + d.primeDim;
                 const primesDetail = [];
-                if (d.primeNuit > 0) primesDetail.push('nuit ' + d.primeNuit.toFixed(0) + '\\u20ac');
-                if (d.primeDim > 0) primesDetail.push('dim ' + d.primeDim.toFixed(0) + '\\u20ac');
-                const primesText = primes > 0 ? primes.toFixed(2) + ' \\u20ac' : '-';
+                if (d.primeNuit > 0) primesDetail.push('nuit ' + d.primeNuit.toFixed(0) + '\u20ac');
+                if (d.primeDim > 0) primesDetail.push('dim ' + d.primeDim.toFixed(0) + '\u20ac');
+                const primesText = primes > 0 ? primes.toFixed(2) + ' \u20ac' : '-';
                 const primesTitle = primesDetail.length ? primesDetail.join(' + ') : '';
                 return '<tr>' +
                   '<td style="font-weight:500"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + etabColor(nom) + ';margin-right:6px"></span>' + nom + '</td>' +
                   '<td class="num">' + d.heures.toFixed(1) + 'h</td>' +
-                  '<td class="num">' + d.taux.toFixed(2) + ' \\u20ac/h</td>' +
+                  '<td class="num">' + d.taux.toFixed(2) + ' \u20ac/h</td>' +
                   '<td class="num" title="' + primesTitle + '">' + primesText + '</td>' +
-                  '<td class="num">' + d.ifc.toFixed(2) + ' \\u20ac</td>' +
-                  '<td class="num">' + d.cp.toFixed(2) + ' \\u20ac</td>' +
-                  '<td class="num" style="font-weight:600">' + d.total.toFixed(2) + ' \\u20ac</td>' +
+                  '<td class="num">' + d.ifc.toFixed(2) + ' \u20ac</td>' +
+                  '<td class="num">' + d.cp.toFixed(2) + ' \u20ac</td>' +
+                  '<td class="num" style="font-weight:600">' + d.total.toFixed(2) + ' \u20ac</td>' +
                 '</tr>';
               }).join('') +
             '</tbody></table></div>';
