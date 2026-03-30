@@ -60,12 +60,20 @@ const App = {
       document.getElementById('nextYearP').onclick = () => { Paiements.currentYear++; Paiements.render(); };
     } else if (page === 'statistiques') {
       actions.innerHTML = `<div class="month-selector">
-        <button class="btn-icon" id="prevYearS"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
+        <button class="btn-icon" id="prevS"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
         <span class="month-display" id="yearDisplayS"></span>
-        <button class="btn-icon" id="nextYearS"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>
+        <button class="btn-icon" id="nextS"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>
       </div>`;
-      document.getElementById('prevYearS').onclick = () => { Stats.currentYear--; Stats.render(); };
-      document.getElementById('nextYearS').onclick = () => { Stats.currentYear++; Stats.render(); };
+      document.getElementById('prevS').onclick = () => {
+        if (Stats.viewMode === 'month') this.currentDate.setMonth(this.currentDate.getMonth() - 1);
+        else Stats.currentYear--;
+        Stats.render();
+      };
+      document.getElementById('nextS').onclick = () => {
+        if (Stats.viewMode === 'month') this.currentDate.setMonth(this.currentDate.getMonth() + 1);
+        else Stats.currentYear++;
+        Stats.render();
+      };
     } else if (page === 'impots') {
       actions.innerHTML = `<div class="month-selector">
         <button class="btn-icon" id="prevYearI"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
