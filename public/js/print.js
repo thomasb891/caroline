@@ -79,7 +79,27 @@ ${content}
     w.document.close();
   },
 
-  async printPlanning() {
+  openPrintChoice() {
+    const body = `
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <button class="btn btn-primary" id="printPerso" style="padding:16px;font-size:14px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Pour nous (complet)
+        </button>
+        <div style="font-size:11px;color:var(--txt3);text-align:center;margin-top:-8px">Etablissement + horaires embauche/debauche</div>
+        <button class="btn btn-secondary" id="printTiers" style="padding:16px;font-size:14px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Pour une autre personne
+        </button>
+        <div style="font-size:11px;color:var(--txt3);text-align:center;margin-top:-8px">Horaires embauche/debauche uniquement (sans nom d'etablissement)</div>
+      </div>
+    `;
+    App.openModal('Imprimer le planning', body, '');
+    document.getElementById('printPerso').onclick = () => { App.closeModal(); this.printPlanning('perso'); };
+    document.getElementById('printTiers').onclick = () => { App.closeModal(); this.printPlanning('tiers'); };
+  },
+
+  async printPlanning(mode = 'perso') {
     const moisKey = App.getMoisKey();
     const [missions, etabs] = await Promise.all([
       API.missions.list(moisKey),
@@ -93,12 +113,14 @@ ${content}
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const startWeekday = (firstDay.getDay() + 6) % 7;
+    const isTiers = mode === 'tiers';
 
     const workMissions = missions.filter(m => !this.isAbsence(m.etablissement));
     const totalH = workMissions.reduce((s, m) => s + (m.heuresTravaillees || 0), 0);
     const totalKm = workMissions.reduce((s, m) => s + (m.km || 0), 0);
+    const uniqueDays = new Set(workMissions.map(m => m.date)).size;
 
-    // Build calendar rows
+    // Build calendar
     let cells = [];
     for (let i = 0; i < startWeekday; i++) cells.push('<td class="empty"></td>');
 
@@ -108,24 +130,26 @@ ${content}
       const weekday = (new Date(year, month, day).getDay() + 6) % 7;
       const isWE = weekday >= 5;
       const hasWork = dayM.some(m => !this.isAbsence(m.etablissement));
-      const hasAbs = dayM.some(m => this.isAbsence(m.etablissement));
 
-      let cls = hasWork ? 'worked' : hasAbs ? 'absence' : isWE ? 'weekend' : '';
+      let cls = hasWork ? 'worked' : isWE ? 'weekend' : '';
       let content = `<div class="day-num">${day}</div>`;
-      dayM.forEach(m => {
-        const abs = this.isAbsence(m.etablissement);
-        const name = m.etablissement || '';
-        const short = name.length > 25 ? name.slice(0, 24) + '...' : name;
-        if (abs) {
-          content += `<div class="absence-name">${short}</div>`;
+
+      dayM.filter(m => !this.isAbsence(m.etablissement)).forEach(m => {
+        if (isTiers) {
+          // Tiers : juste les horaires, pas de nom
+          const horaires = (m.heureDebut && m.heureFin) ? `${m.heureDebut} - ${m.heureFin}` : '';
+          if (horaires) content += `<div class="mission-name"><span class="mission-hours">${horaires}</span></div>`;
         } else {
-          const h = m.heuresTravaillees ? m.heuresTravaillees.toFixed(1) + 'h' : '';
-          content += `<div class="mission-name">${short} <span class="mission-hours">${h}</span></div>`;
+          // Perso : etablissement + horaires
+          const name = m.etablissement || '';
+          const short = name.length > 20 ? name.slice(0, 19) + '...' : name;
+          const horaires = (m.heureDebut && m.heureFin) ? `${m.heureDebut}-${m.heureFin}` : '';
+          content += `<div class="mission-name">${short}</div>`;
+          if (horaires) content += `<div class="mission-hours">${horaires}</div>`;
         }
       });
       cells.push(`<td class="${cls}">${content}</td>`);
     }
-    // Fill end of last week
     while (cells.length % 7 !== 0) cells.push('<td class="empty"></td>');
 
     let calRows = '';
@@ -133,50 +157,10 @@ ${content}
       calRows += '<tr>' + cells.slice(i, i + 7).join('') + '</tr>';
     }
 
-    // Build detail table (sorted by date)
-    const sortedWork = [...workMissions].sort((a, b) => a.date.localeCompare(b.date));
-    const joursFR = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
-    let detailRows = sortedWork.map(m => {
-      const dt = new Date(m.date + 'T00:00:00');
-      const jour = joursFR[dt.getDay()];
-      return `<tr>
-        <td>${this.formatDateFR(m.date)}</td>
-        <td>${jour}</td>
-        <td>${m.etablissement || '-'}</td>
-        <td class="num">${m.heureDebut || '-'}</td>
-        <td class="num">${m.heureFin || '-'}</td>
-        <td class="num" style="font-weight:700">${m.heuresTravaillees ? m.heuresTravaillees.toFixed(1) + 'h' : '-'}</td>
-        <td class="num">${m.km ? m.km.toFixed(1) : '-'}</td>
-      </tr>`;
-    }).join('');
-    detailRows += `<tr class="total">
-      <td colspan="5">Total</td>
-      <td class="num">${totalH.toFixed(1)}h</td>
-      <td class="num">${totalKm.toFixed(0)} km</td>
-    </tr>`;
-
-    // Recap par etablissement
-    const byEtab = {};
-    workMissions.forEach(m => {
-      const k = m.etablissement || '?';
-      if (!byEtab[k]) byEtab[k] = { heures: 0, km: 0, count: 0 };
-      byEtab[k].heures += m.heuresTravaillees || 0;
-      byEtab[k].km += m.km || 0;
-      byEtab[k].count++;
-    });
-    let recapRows = Object.keys(byEtab).sort().map(etab => {
-      const d = byEtab[etab];
-      return `<tr><td>${etab}</td><td class="num">${d.count}</td><td class="num">${d.heures.toFixed(1)}h</td><td class="num">${d.km.toFixed(0)} km</td></tr>`;
-    }).join('');
-    recapRows += `<tr class="total"><td>Total</td><td class="num">${workMissions.length}</td><td class="num">${totalH.toFixed(1)}h</td><td class="num">${totalKm.toFixed(0)} km</td></tr>`;
-
-    // Count unique days worked
-    const uniqueDays = new Set(workMissions.map(m => m.date)).size;
-
     const html = `
       <div class="header">
         <h1>Planning - ${moisLabel.charAt(0).toUpperCase() + moisLabel.slice(1)}</h1>
-        <p>Caroline - Missions Hublo</p>
+        <p>Caroline${isTiers ? '' : ' - Missions Hublo'}</p>
       </div>
       <div class="stats-bar">
         <div class="stat"><div class="stat-label">Missions</div><div class="stat-val">${workMissions.length}</div></div>
@@ -188,20 +172,7 @@ ${content}
         <thead><tr><th>Lundi</th><th>Mardi</th><th>Mercredi</th><th>Jeudi</th><th>Vendredi</th><th>Samedi</th><th>Dimanche</th></tr></thead>
         <tbody>${calRows}</tbody>
       </table>
-
-      <div class="section-title">Detail des missions</div>
-      <table class="data">
-        <thead><tr><th>Date</th><th>Jour</th><th>Etablissement</th><th style="text-align:right">Debut</th><th style="text-align:right">Fin</th><th style="text-align:right">Heures</th><th style="text-align:right">KM</th></tr></thead>
-        <tbody>${detailRows}</tbody>
-      </table>
-
-      <div class="section-title">Recapitulatif par etablissement</div>
-      <table class="data">
-        <thead><tr><th>Etablissement</th><th style="text-align:right">Missions</th><th style="text-align:right">Heures</th><th style="text-align:right">KM</th></tr></thead>
-        <tbody>${recapRows}</tbody>
-      </table>
-
-      <div class="footer">Document genere le ${new Date().toLocaleDateString('fr-FR')} - Hublo Gestion</div>
+      <div class="footer">Document genere le ${new Date().toLocaleDateString('fr-FR')}</div>
     `;
 
     this.openPrintWindow(`Planning ${moisLabel}`, html);
