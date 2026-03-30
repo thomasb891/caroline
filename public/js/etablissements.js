@@ -216,11 +216,21 @@ const Etablissements = {
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Taux horaire net (&euro;/h)</label>
-            <input type="number" step="0.001" class="form-input" id="eTaux" value="${etab ? etab.tauxHoraire || '' : ''}" placeholder="Ex: 12.424">
+            <input type="number" step="0.01" class="form-input" id="eTaux" value="${etab ? etab.tauxHoraire || '' : ''}" placeholder="Ex: 8.60">
           </div>
           <div class="form-group">
+            <label class="form-label">Segur net (&euro;/h)</label>
+            <input type="number" step="0.01" class="form-input" id="eSegur" value="${etab ? etab.segur || '' : ''}" placeholder="Ex: 0.98">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
             <label class="form-label">Prime nuit net (&euro;/h)</label>
-            <input type="number" step="0.01" class="form-input" id="ePrimeNuit" value="${etab ? etab.primeNuit || '' : ''}" placeholder="Ex: 1.00">
+            <input type="number" step="0.01" class="form-input" id="ePrimeNuit" value="${etab ? etab.primeNuit || '' : ''}" placeholder="Ex: 0.92">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Prime dimanche net (&euro;/h)</label>
+            <input type="number" step="0.01" class="form-input" id="ePrimeDim" value="${etab ? etab.primeDimanche || '' : ''}" placeholder="Ex: 4.21">
           </div>
         </div>
         <div class="form-row">
@@ -310,7 +320,9 @@ const Etablissements = {
         siteUrl: document.getElementById('eSiteUrl').value.trim(),
         typeContrat: document.getElementById('eContrat').value,
         tauxHoraire: parseFloat(document.getElementById('eTaux').value) || 0,
+        segur: parseFloat(document.getElementById('eSegur').value) || 0,
         primeNuit: parseFloat(document.getElementById('ePrimeNuit').value) || 0,
+        primeDimanche: parseFloat(document.getElementById('ePrimeDim').value) || 0,
         allocationARE: parseFloat(document.getElementById('eARE').value) || 0,
         ifc: parseFloat(document.getElementById('eIFC').value) || 0,
         cp: parseFloat(document.getElementById('eCP').value) || 0

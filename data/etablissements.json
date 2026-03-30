@@ -29,13 +29,14 @@
     "receptionDocs": "",
     "siteUrl": "",
     "typeContrat": "cdd",
-    "tauxHoraire": 9.46,
+    "tauxHoraire": 8.6,
     "allocationARE": 0,
     "ifc": 10,
     "cp": 10,
     "kmCalcule": 75.8,
-    "primeNuit": 1,
-    "primeDimanche": 4.3
+    "primeNuit": 0.92,
+    "primeDimanche": 4.21,
+    "segur": 0.98
   },
   {
     "id": "mnd0jco4y1hwy",
@@ -49,11 +50,12 @@
     "receptionDocs": "",
     "siteUrl": "",
     "typeContrat": "cdd",
-    "tauxHoraire": 9.62,
+    "tauxHoraire": 9.31,
     "allocationARE": 0,
     "ifc": 10,
     "cp": 10,
-    "kmCalcule": 55.3
+    "kmCalcule": 55.3,
+    "segur": 1.06
   },
   {
     "id": "mnd0jco4z64pr",
@@ -67,11 +69,12 @@
     "receptionDocs": "",
     "siteUrl": "",
     "typeContrat": "",
-    "tauxHoraire": 10.09,
+    "tauxHoraire": 9.31,
     "allocationARE": 0,
     "ifc": 10,
     "cp": 10,
-    "kmCalcule": 20.3
+    "kmCalcule": 20.3,
+    "segur": 1.06
   },
   {
     "id": "mnd0jco46h46d",
@@ -85,11 +88,12 @@
     "receptionDocs": "",
     "siteUrl": "",
     "typeContrat": "",
-    "tauxHoraire": 6.45,
+    "tauxHoraire": 9.31,
     "allocationARE": 0,
     "ifc": 10,
     "cp": 10,
-    "kmCalcule": 38.5
+    "kmCalcule": 38.5,
+    "segur": 1.06
   },
   {
     "id": "mnd0jco4c3zfs",
@@ -103,11 +107,12 @@
     "receptionDocs": "",
     "siteUrl": "",
     "typeContrat": "",
-    "tauxHoraire": 10.18,
+    "tauxHoraire": 9.31,
     "allocationARE": 0,
     "ifc": 10,
     "cp": 10,
-    "kmCalcule": 40.7
+    "kmCalcule": 40.7,
+    "segur": 1.06
   },
   {
     "id": "mnd0jco4s5zpx",
@@ -121,11 +126,12 @@
     "receptionDocs": "",
     "siteUrl": "",
     "typeContrat": "",
-    "tauxHoraire": 10.09,
+    "tauxHoraire": 9.31,
     "allocationARE": 0,
     "ifc": 10,
     "cp": 10,
-    "kmCalcule": 15.4
+    "kmCalcule": 15.4,
+    "segur": 1.06
   },
   {
     "id": "mnd0jco4b7i0z",
@@ -139,11 +145,12 @@
     "receptionDocs": "",
     "siteUrl": "",
     "typeContrat": "",
-    "tauxHoraire": 10.09,
+    "tauxHoraire": 9.31,
     "allocationARE": 0,
     "ifc": 10,
     "cp": 10,
-    "kmCalcule": 57.2
+    "kmCalcule": 57.2,
+    "segur": 1.06
   },
   {
     "id": "mnd0jco4hnebk",
@@ -157,11 +164,12 @@
     "receptionDocs": "",
     "siteUrl": "",
     "typeContrat": "",
-    "tauxHoraire": 10.09,
+    "tauxHoraire": 9.31,
     "allocationARE": 0,
     "ifc": 10,
     "cp": 10,
-    "kmCalcule": 29
+    "kmCalcule": 29,
+    "segur": 1.06
   },
   {
     "id": "mnd0jco49pueo",
@@ -176,16 +184,17 @@
     "receptionDocs": "",
     "siteUrl": "",
     "typeContrat": "",
-    "tauxHoraire": 10.09,
+    "tauxHoraire": 9.31,
     "allocationARE": 0,
     "ifc": 10,
-    "cp": 10
+    "cp": 10,
+    "segur": 1.06
   },
   {
     "id": "mnd0jco4davwh",
     "nom": "Résidence Harmonie Breuillet",
     "km": 75.8,
-    "tauxHoraire": 7.3,
+    "tauxHoraire": 6.45,
     "ifc": 10,
     "cp": 10,
     "telephone": "05 46 22 69 69",
@@ -197,7 +206,8 @@
     "receptionDocs": "",
     "siteUrl": "",
     "allocationARE": 0,
-    "kmCalcule": 75.7
+    "kmCalcule": 75.7,
+    "segur": 0.85
   },
   {
     "id": "mnd0jco450251",
@@ -212,10 +222,11 @@
     "receptionDocs": "",
     "siteUrl": "",
     "typeContrat": "",
-    "tauxHoraire": 10.09,
+    "tauxHoraire": 9.31,
     "allocationARE": 0,
     "ifc": 10,
-    "cp": 10
+    "cp": 10,
+    "segur": 1.06
   },
   {
     "id": "mnd0jco4seccb",
@@ -229,11 +240,12 @@
     "receptionDocs": "",
     "siteUrl": "",
     "typeContrat": "",
-    "tauxHoraire": 10.09,
+    "tauxHoraire": 9.31,
     "allocationARE": 0,
     "ifc": 10,
     "cp": 10,
-    "kmCalcule": 72.8
+    "kmCalcule": 72.8,
+    "segur": 1.06
   },
   {
     "id": "mnd0jco49s4g1",
@@ -285,10 +297,11 @@
     "receptionDocs": "",
     "siteUrl": "",
     "typeContrat": "",
-    "tauxHoraire": 10.09,
+    "tauxHoraire": 9.31,
     "allocationARE": 0,
     "ifc": 10,
-    "cp": 10
+    "cp": 10,
+    "segur": 1.06
   },
   {
     "id": "mnd1ph7ti1llt",
