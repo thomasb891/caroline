@@ -107,12 +107,12 @@
     "receptionDocs": "",
     "siteUrl": "",
     "typeContrat": "",
-    "tauxHoraire": 9.31,
+    "tauxHoraire": 8.96,
     "allocationARE": 0,
     "ifc": 10,
     "cp": 10,
     "kmCalcule": 40.7,
-    "segur": 1.06
+    "segur": 1.22
   },
   {
     "id": "mnd0jco4s5zpx",
@@ -194,7 +194,7 @@
     "id": "mnd0jco4davwh",
     "nom": "Résidence Harmonie Breuillet",
     "km": 75.8,
-    "tauxHoraire": 6.45,
+    "tauxHoraire": 6.42,
     "ifc": 10,
     "cp": 10,
     "telephone": "05 46 22 69 69",
@@ -207,7 +207,7 @@
     "siteUrl": "",
     "allocationARE": 0,
     "kmCalcule": 75.7,
-    "segur": 0.85
+    "segur": 0.88
   },
   {
     "id": "mnd0jco450251",
