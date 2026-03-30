@@ -277,26 +277,15 @@ app.get('/api/stats/annuel', (req, res) => {
 // --- Document Upload (multer) ---
 const DOCS_ROOT = '\\\\MYCLOUD-1KSKLK\\Serveur\\Caro Hublo\\Documents';
 
+const os = require('os');
 const upload = multer({
-  storage: multer.diskStorage({
-    destination: (req, file, cb) => {
-      const { etablissement, annee, mois } = req.body;
-      const dest = path.join(DOCS_ROOT, etablissement, annee, mois);
-      fs.mkdirSync(dest, { recursive: true });
-      cb(null, dest);
-    },
-    filename: (req, file, cb) => {
-      const ext = path.extname(file.originalname);
-      const base = path.basename(file.originalname, ext).replace(/[^a-zA-Z0-9_-]/g, '_');
-      cb(null, `${base}_${Date.now()}${ext}`);
-    }
-  }),
+  dest: os.tmpdir(),
   fileFilter: (req, file, cb) => {
     const allowed = ['.pdf', '.jpg', '.jpeg', '.png', '.gif', '.webp'];
     const ext = path.extname(file.originalname).toLowerCase();
     cb(null, allowed.includes(ext));
   },
-  limits: { fileSize: 20 * 1024 * 1024 } // 20MB
+  limits: { fileSize: 20 * 1024 * 1024 }
 });
 
 app.post('/api/documents/upload', upload.single('file'), (req, res) => {
