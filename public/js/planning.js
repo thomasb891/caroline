@@ -1,3 +1,5 @@
+const ABSENCE_NAMES = ['timeo', 'timéo', 'hotel', 'hôtel', 'rdv'];
+
 const Planning = {
   missions: [],
   etablissements: [],
@@ -14,8 +16,8 @@ const Planning = {
     const display = document.getElementById('monthDisplay');
     if (display) display.textContent = App.getMoisLabel();
 
-    const ABSENCES = ['timeo', 'timéo', 'hotel', 'hôtel', 'rdv'];
-    const isAbsence = (name) => ABSENCES.some(a => (name || '').toLowerCase().includes(a));
+    this._isAbsence = (name) => ABSENCE_NAMES.some(a => (name || '').toLowerCase().includes(a));
+    const isAbsence = this._isAbsence;
     const workMissions = missions.filter(m => !isAbsence(m.etablissement));
 
     const totalH = workMissions.reduce((s, m) => s + (m.heuresTravaillees || 0), 0);
@@ -49,7 +51,7 @@ const Planning = {
         <p>Caroline - Missions Hublo</p>
       </div>
       <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
-        <button class="btn-print" onclick="window.print()">
+        <button class="btn-print" onclick="Print.printPlanning()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
           Imprimer
         </button>
@@ -103,8 +105,8 @@ const Planning = {
       const weekday = (new Date(year, month, day).getDay() + 6) % 7;
       const isWeekend = weekday >= 5;
 
-      const hasWork = dayMissions.some(m => !isAbsence(m.etablissement));
-      const hasAbsence = dayMissions.some(m => isAbsence(m.etablissement));
+      const hasWork = dayMissions.some(m => !this._isAbsence(m.etablissement));
+      const hasAbsence = dayMissions.some(m => this._isAbsence(m.etablissement));
 
       let cls = 'cal-day';
       if (isToday) cls += ' today';
@@ -116,7 +118,7 @@ const Planning = {
         const name = m.etablissement || '?';
         const short = name.length > 15 ? name.slice(0, 14) + '...' : name;
         const isStage = name.toLowerCase().includes('stage');
-        const absent = isAbsence(name);
+        const absent = this._isAbsence(name);
         const hours = m.heuresTravaillees && !absent ? `${m.heuresTravaillees.toFixed(1)}h` : '';
         return `<div class="mission-chip${isStage ? ' stage' : ''}${absent ? ' absence' : ''}" data-id="${m.id}">${short}${hours ? `<span class="chip-hours"> ${hours}</span>` : ''}</div>`;
       }).join('');

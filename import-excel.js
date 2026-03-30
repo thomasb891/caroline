@@ -169,6 +169,9 @@ const paiements = [];
 const paiementKeys = new Set();
 
 function importPaiements(file) {
+  // Extract year from filename (e.g. "Paie Caro 2025.xlsx" -> 2025)
+  const fileYear = (file.match(/(\d{4})/) || [])[1];
+
   try {
     const wb = XLSX.readFile(file);
     for (const sheetName of wb.SheetNames) {
@@ -176,55 +179,103 @@ function importPaiements(file) {
       const data = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { header: 1 });
       if (!data.length) continue;
 
-      let headerRow = -1;
-      for (let r = 0; r < Math.min(data.length, 10); r++) {
-        const row = data[r];
-        if (!row) continue;
-        if (row.some(c => c === 'Date versement ' || c === 'Date versement' || c === 'Montant')) {
-          headerRow = r;
-          break;
-        }
-      }
-      if (headerRow < 0) continue;
-
-      const headerRowData = data[headerRow];
-      const monthGroups = [];
-      for (let c = 0; c < headerRowData.length; c++) {
-        if (headerRowData[c] === 'Date versement ' || headerRowData[c] === 'Date versement') {
-          monthGroups.push({
-            ficheCol: c >= 2 && headerRowData[c - 2] === 'Fiche Paye' ? c - 2 : -1,
-            finContratCol: c >= 1 && headerRowData[c - 1] === 'Fin de contrat' ? c - 1 : -1,
-            dateCol: c,
-            montantCol: c + 1
-          });
-        }
-      }
-
       const etabNom = sheetName.trim();
 
-      for (let r = headerRow + 1; r < data.length; r++) {
+      // Find ALL header rows in the sheet (some sheets have 2 blocks: Jan-Jun and Jul-Dec)
+      const headerRows = [];
+      for (let r = 0; r < data.length; r++) {
         const row = data[r];
         if (!row) continue;
-        for (const group of monthGroups) {
-          const dateSerial = row[group.dateCol];
-          const montant = row[group.montantCol];
-          if (!dateSerial || !montant || montant === 0) continue;
-          if (typeof montant !== 'number') continue;
-          const dateStr = excelDate(dateSerial);
-          if (!dateStr) continue;
+        if (row.some(c => c === 'Date versement ' || c === 'Date versement')) {
+          headerRows.push(r);
+        }
+      }
+      if (!headerRows.length) continue;
 
-          const key = `${dateStr}_${etabNom}_${montant}`;
-          if (paiementKeys.has(key)) continue;
-          paiementKeys.add(key);
+      // Find month name rows to determine which month each column group represents
+      const monthNameRows = [];
+      for (let r = 0; r < data.length; r++) {
+        const row = data[r];
+        if (!row) continue;
+        if (row.some(c => typeof c === 'string' && ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet'].includes(c))) {
+          monthNameRows.push(r);
+        }
+      }
 
-          paiements.push({
-            id: uid(),
-            etablissement: etabNom,
-            dateVersement: dateStr,
-            montant,
-            fichePaye: group.ficheCol >= 0 ? !!row[group.ficheCol] : false,
-            finContrat: group.finContratCol >= 0 ? !!row[group.finContratCol] : false
-          });
+      for (const headerRow of headerRows) {
+        const headerRowData = data[headerRow];
+        const monthGroups = [];
+
+        // Find the month names row just before this header
+        let monthRow = -1;
+        for (const mr of monthNameRows) {
+          if (mr < headerRow) monthRow = mr;
+        }
+        const monthNames = monthRow >= 0 ? data[monthRow] : [];
+
+        for (let c = 0; c < headerRowData.length; c++) {
+          if (headerRowData[c] === 'Date versement ' || headerRowData[c] === 'Date versement') {
+            // Determine which month index this column group is for
+            let monthIdx = -1;
+            const monthMap = { 'Janvier': 0, 'Février': 1, 'Fevrier': 1, 'Mars': 2, 'Avril': 3, 'Mai': 4, 'Juin': 5, 'Juillet': 6, 'Août': 7, 'Aout': 7, 'Septembre': 8, 'Octobre': 9, 'Novembre': 10, 'Décembre': 11, 'Decembre': 11 };
+            // Search month name near this column
+            for (let mc = Math.max(0, c - 3); mc <= c + 1 && mc < monthNames.length; mc++) {
+              const mn = monthNames[mc];
+              if (typeof mn === 'string') {
+                const clean = mn.replace(/[0-9\s]/g, '');
+                for (const [name, idx] of Object.entries(monthMap)) {
+                  if (clean.includes(name) || clean.toLowerCase().includes(name.toLowerCase())) { monthIdx = idx; break; }
+                }
+              }
+              if (monthIdx >= 0) break;
+            }
+
+            monthGroups.push({
+              ficheCol: c >= 2 && headerRowData[c - 2] === 'Fiche Paye' ? c - 2 : -1,
+              finContratCol: c >= 1 && headerRowData[c - 1] === 'Fin de contrat' ? c - 1 : -1,
+              dateCol: c,
+              montantCol: c + 1,
+              monthIdx
+            });
+          }
+        }
+
+        // Find end of this block (next header or end of data)
+        const nextHeader = headerRows.find(h => h > headerRow + 2);
+        const endRow = nextHeader ? nextHeader - 3 : data.length;
+
+        for (let r = headerRow + 1; r < endRow; r++) {
+          const row = data[r];
+          if (!row) continue;
+          if (row[0] === 'Total') continue; // skip total rows
+
+          for (const group of monthGroups) {
+            const dateSerial = row[group.dateCol];
+            const montant = row[group.montantCol];
+            if (!dateSerial || !montant || montant === 0) continue;
+            if (typeof montant !== 'number') continue;
+
+            let dateStr = excelDate(dateSerial);
+            if (!dateStr) continue;
+
+            // Fix year if it doesn't match the file year
+            if (fileYear && !dateStr.startsWith(fileYear)) {
+              dateStr = fileYear + dateStr.slice(4);
+            }
+
+            const key = `${dateStr}_${etabNom}_${montant}`;
+            if (paiementKeys.has(key)) continue;
+            paiementKeys.add(key);
+
+            paiements.push({
+              id: uid(),
+              etablissement: etabNom,
+              dateVersement: dateStr,
+              montant,
+              fichePaye: group.ficheCol >= 0 ? !!row[group.ficheCol] : false,
+              finContrat: group.finContratCol >= 0 ? !!row[group.finContratCol] : false
+            });
+          }
         }
       }
     }
