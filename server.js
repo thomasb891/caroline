@@ -409,6 +409,93 @@ app.post('/api/comparaison', (req, res) => {
   res.json(req.body);
 });
 
+// --- Notifications (fiches de paie manquantes) ---
+app.get('/api/notifications', (req, res) => {
+  const missions = readJSON('missions.json');
+  const documents = readJSON('documents.json');
+  const absenceNames = ['timeo', 'timéo', 'hotel', 'hôtel', 'rdv'];
+  const isAbsence = (name) => absenceNames.some(a => (name || '').toLowerCase().includes(a));
+
+  // Group missions by mois+etablissement (only work missions)
+  const moisEtabs = {};
+  missions.forEach(m => {
+    if (!m.date || isAbsence(m.etablissement)) return;
+    const moisKey = m.date.slice(0, 7); // "2026-03"
+    const key = `${moisKey}|${m.etablissement}`;
+    if (!moisEtabs[key]) moisEtabs[key] = { mois: moisKey, etablissement: m.etablissement, lastDate: m.date };
+    if (m.date > moisEtabs[key].lastDate) moisEtabs[key].lastDate = m.date;
+  });
+
+  const now = new Date();
+  const alerts = [];
+  Object.values(moisEtabs).forEach(({ mois, etablissement, lastDate }) => {
+    // Check if more than 30 days since last mission of that month
+    const lastMissionDate = new Date(lastDate + 'T00:00:00');
+    const daysSince = Math.floor((now - lastMissionDate) / (1000 * 60 * 60 * 24));
+    if (daysSince <= 30) return;
+
+    // Check if fichePaye exists in documents
+    const doc = documents.find(d => d.mois === mois && d.etablissement === etablissement);
+    if (doc && doc.fichePaye) return;
+
+    const moisNoms = ['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
+    const [y, m] = mois.split('-');
+    const moisLabel = moisNoms[parseInt(m) - 1] + ' ' + y;
+
+    alerts.push({ type: 'fichePaye_manquante', etablissement, mois, moisLabel, daysSince });
+  });
+
+  // Sort by most recent first
+  alerts.sort((a, b) => b.mois.localeCompare(a.mois) || a.etablissement.localeCompare(b.etablissement));
+  res.json(alerts);
+});
+
+// --- Export ICS (calendar sync) ---
+app.get('/api/export/ics', (req, res) => {
+  const mois = req.query.mois;
+  if (!mois) return res.status(400).json({ error: 'Parametre mois requis (ex: 2026-03)' });
+
+  const missions = readJSON('missions.json').filter(m => m.date && m.date.startsWith(mois));
+  const etablissements = readJSON('etablissements.json');
+  const etabMap = {};
+  etablissements.forEach(e => { etabMap[e.nom] = e; });
+
+  const pad2 = (n) => String(n).padStart(2, '0');
+  const formatICSDate = (dateStr, timeStr) => {
+    // dateStr: "2026-03-15", timeStr: "08:00"
+    const [y, m, d] = dateStr.split('-');
+    const [h, min] = (timeStr || '08:00').split(':');
+    return `${y}${m}${d}T${pad2(h)}${pad2(min)}00`;
+  };
+
+  const now = new Date();
+  const stamp = `${now.getFullYear()}${pad2(now.getMonth() + 1)}${pad2(now.getDate())}T${pad2(now.getHours())}${pad2(now.getMinutes())}${pad2(now.getSeconds())}`;
+
+  let events = '';
+  missions.forEach(m => {
+    const etab = etabMap[m.etablissement] || {};
+    const summary = m.etablissement || 'Mission';
+    const location = (etab.adresse || '').replace(/,/g, '\\,').replace(/;/g, '\\;');
+    const dtstart = formatICSDate(m.date, m.heureDebut);
+    const dtend = formatICSDate(m.date, m.heureFin);
+    const uid = m.id + '@caroline-hublo';
+
+    events += `BEGIN:VEVENT\r\nUID:${uid}\r\nDTSTAMP:${stamp}\r\nDTSTART:${dtstart}\r\nDTEND:${dtend}\r\nSUMMARY:${summary}\r\n`;
+    if (location) events += `LOCATION:${location}\r\n`;
+    events += `END:VEVENT\r\n`;
+  });
+
+  const ics = `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Caroline Hublo//Planning//FR\r\nCALSCALE:GREGORIAN\r\nMETHOD:PUBLISH\r\nX-WR-CALNAME:Planning Caroline\r\n${events}END:VCALENDAR\r\n`;
+
+  const moisNoms = ['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
+  const [y, mo] = mois.split('-');
+  const filename = `Planning_${moisNoms[parseInt(mo) - 1]}_${y}.ics`;
+
+  res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  res.send(ics);
+});
+
 // --- Logs ---
 app.get('/api/logs', (req, res) => {
   const logsPath = path.join(DATA, 'logs.json');

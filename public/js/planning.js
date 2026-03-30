@@ -73,12 +73,13 @@ const Planning = {
 
   async render() {
     const moisKey = App.getMoisKey();
-    const [missions, etabs, vacances, config, prixMois] = await Promise.all([
+    const [missions, etabs, vacances, config, prixMois, notifications] = await Promise.all([
       API.missions.list(moisKey),
       API.etablissements.list(),
       API.vacances.list(moisKey),
       API.config.get(),
-      API.prixGasoil.getForMonth(App.getMoisKey())
+      API.prixGasoil.getForMonth(App.getMoisKey()),
+      API.notifications.list().catch(() => [])
     ]);
     this.missions = missions;
     this.etablissements = etabs;
@@ -133,6 +134,10 @@ const Planning = {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
           Vacances
         </button>
+        <button class="btn-print" id="btnExportICS">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Exporter calendrier
+        </button>
         <button class="btn-print" onclick="Print.openPrintChoice()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
           Imprimer
@@ -158,10 +163,32 @@ const Planning = {
           <div class="sub">Carburant : ${(totalKm / 100 * (config.consommation || 6.5) * prixMois).toFixed(2)} &euro; (${prixMois.toFixed(3)}&euro;/L)</div>
         </div>
       </div>
+      <div id="notificationsBox"></div>
       <div class="calendar-grid" id="calGrid"></div>
       <div style="text-align:center;padding:20px;font-size:11px;color:var(--txt3)">&copy; Thomas</div>
     `;
     document.getElementById('btnVacances').onclick = () => this.openVacancesModal();
+    document.getElementById('btnExportICS').onclick = () => {
+      window.open(API_BASE + '/api/export/ics?mois=' + App.getMoisKey());
+    };
+
+    // Notifications fiches de paie manquantes
+    if (notifications && notifications.length > 0) {
+      const notifBox = document.getElementById('notificationsBox');
+      const items = notifications.map(n =>
+        `<div style="padding:4px 0;font-size:13px">Fiche de paie manquante : <strong>${n.etablissement}</strong> - ${n.moisLabel} (il y a ${n.daysSince} jours)</div>`
+      ).join('');
+      notifBox.innerHTML = `
+        <div style="background:rgba(255,193,7,0.15);border:1px solid rgba(255,193,7,0.4);border-radius:8px;padding:12px 16px;margin-bottom:16px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#f0ad4e" stroke-width="2" width="18" height="18"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span style="font-weight:600;color:#f0ad4e;font-size:14px">Notifications (${notifications.length})</span>
+          </div>
+          ${items}
+        </div>
+      `;
+    }
+
     this.renderCalendar();
     this.loadLastUpdated();
   },

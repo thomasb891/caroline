@@ -14,11 +14,39 @@ const Impots = {
 
     const page = document.getElementById('page-impots');
 
-    // Revenus table rows
+    // Group paiements by mois then by etablissement
+    const paiementsByMois = {};
+    paiements.forEach(p => {
+      if (!p.dateVersement) return;
+      const mk = p.dateVersement.slice(0, 7);
+      if (!paiementsByMois[mk]) paiementsByMois[mk] = [];
+      paiementsByMois[mk].push(p);
+    });
+
+    // Revenus table rows (cliquable pour detail)
     const revRows = moisNoms.map((nom, i) => {
       const key = `${annee}-${String(i + 1).padStart(2, '0')}`;
       const d = stats.moisData[key] || { revenus: 0 };
-      return `<tr><td>${nom}</td><td class="num">${d.revenus.toFixed(2)} &euro;</td></tr>`;
+      const moisPaie = paiementsByMois[key] || [];
+      const hasData = moisPaie.length > 0;
+
+      // Detail rows by etablissement
+      const byEtab = {};
+      moisPaie.forEach(p => {
+        const e = p.etablissement || 'Autre';
+        byEtab[e] = (byEtab[e] || 0) + (p.montant || 0);
+      });
+      const detailRows = Object.entries(byEtab).sort((a, b) => b[1] - a[1]).map(([etab, montant]) =>
+        `<tr class="rev-detail" data-mois="${key}" style="display:none">
+          <td style="padding-left:24px;font-size:11px;color:var(--txt2)">${etab}</td>
+          <td class="num" style="font-size:11px">${montant.toFixed(2)} &euro;</td>
+        </tr>`
+      ).join('');
+
+      return `<tr class="rev-mois" data-toggle="${key}" style="cursor:${hasData ? 'pointer' : 'default'}">
+        <td style="font-weight:${hasData ? '600' : '400'}">${hasData ? '<span class="rev-icon" style="display:inline-block;width:12px;transition:transform 0.2s">&#9654;</span> ' : ''}${nom}</td>
+        <td class="num" style="font-weight:${d.revenus > 0 ? '600' : '400'}">${d.revenus > 0 ? d.revenus.toFixed(2) + ' &euro;' : '-'}</td>
+      </tr>${detailRows}`;
     }).join('');
 
     // KM table rows
@@ -137,6 +165,20 @@ const Impots = {
     `;
 
     document.getElementById('editBareme').onclick = () => this.openBaremeModal(stats.config);
+
+    // Toggle detail rows on click
+    page.querySelectorAll('.rev-mois').forEach(row => {
+      row.onclick = () => {
+        const key = row.dataset.toggle;
+        if (!key) return;
+        const details = page.querySelectorAll(`.rev-detail[data-mois="${key}"]`);
+        if (!details.length) return;
+        const visible = details[0].style.display !== 'none';
+        details.forEach(d => d.style.display = visible ? 'none' : 'table-row');
+        const icon = row.querySelector('.rev-icon');
+        if (icon) icon.style.transform = visible ? '' : 'rotate(90deg)';
+      };
+    });
     document.getElementById('goComparaison').onclick = () => {
       Comparaison.currentYear = this.currentYear;
       App.navigate('comparaison');

@@ -7,9 +7,54 @@ const API_BASE = (() => {
 
 const API = {
   async get(url) { const r = await fetch(API_BASE + url); return r.json(); },
-  async post(url, data) { const r = await fetch(API_BASE + url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); return r.json(); },
-  async put(url, data) { const r = await fetch(API_BASE + url, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); return r.json(); },
-  async del(url) { const r = await fetch(API_BASE + url, { method: 'DELETE' }); return r.json(); },
+  async post(url, data) {
+    try {
+      const r = await fetch(API_BASE + url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+      return r.json();
+    } catch (e) {
+      API._enqueue({ method: 'POST', url, data });
+      return { ok: false, offline: true };
+    }
+  },
+  async put(url, data) {
+    try {
+      const r = await fetch(API_BASE + url, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+      return r.json();
+    } catch (e) {
+      API._enqueue({ method: 'PUT', url, data });
+      return { ok: false, offline: true };
+    }
+  },
+  async del(url) {
+    try {
+      const r = await fetch(API_BASE + url, { method: 'DELETE' });
+      return r.json();
+    } catch (e) {
+      API._enqueue({ method: 'DELETE', url });
+      return { ok: false, offline: true };
+    }
+  },
+
+  _enqueue(req) {
+    const queue = JSON.parse(localStorage.getItem('offlineQueue') || '[]');
+    queue.push({ ...req, timestamp: Date.now() });
+    localStorage.setItem('offlineQueue', JSON.stringify(queue));
+  },
+
+  async _replayQueue() {
+    const queue = JSON.parse(localStorage.getItem('offlineQueue') || '[]');
+    if (!queue.length) return;
+    localStorage.setItem('offlineQueue', '[]');
+    for (const req of queue) {
+      try {
+        const opts = { method: req.method, headers: { 'Content-Type': 'application/json' } };
+        if (req.data) opts.body = JSON.stringify(req.data);
+        await fetch(API_BASE + req.url, opts);
+      } catch (e) {
+        API._enqueue(req);
+      }
+    }
+  },
 
   etablissements: {
     list: () => API.get('/api/etablissements'),
@@ -68,6 +113,9 @@ const API = {
   comparaison: {
     get: (annee) => API.get(`/api/comparaison?annee=${annee}`),
     save: (d) => API.post('/api/comparaison', d)
+  },
+  notifications: {
+    list: () => API.get('/api/notifications')
   },
   logs: {
     list: (limit = 100) => API.get(`/api/logs?limit=${limit}`),

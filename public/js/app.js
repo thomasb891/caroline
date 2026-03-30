@@ -166,7 +166,31 @@ const App = {
   }
 };
 
-document.addEventListener('DOMContentLoaded', () => App.init());
+document.addEventListener('DOMContentLoaded', () => {
+  App.init();
+
+  // Offline detection
+  const banner = document.getElementById('offlineBanner');
+  const updateOnlineStatus = () => {
+    if (!navigator.onLine) {
+      if (banner) banner.style.display = 'block';
+    } else {
+      if (banner) banner.style.display = 'none';
+    }
+  };
+  updateOnlineStatus();
+
+  window.addEventListener('offline', () => {
+    if (banner) banner.style.display = 'block';
+  });
+
+  window.addEventListener('online', () => {
+    if (banner) banner.style.display = 'none';
+    App.toast('Connexion retablie', 'success');
+    // Replay offline queue
+    if (typeof API !== 'undefined' && API._replayQueue) API._replayQueue();
+  });
+});
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js').catch(() => {});

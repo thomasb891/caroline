@@ -1,5 +1,24 @@
-const CACHE = 'hublo-v30';
-const ASSETS = ['/', '/css/style.css', '/css/components.css', '/js/api.js', '/js/app.js', '/js/planning.js', '/js/paiements.js', '/js/impots.js', '/js/etablissements.js', '/js/documents.js', '/js/stats.js', '/js/comparaison.js', '/js/logs.js', '/js/print.js', '/manifest.json'];
+const CACHE = 'hublo-v31';
+const ASSETS = [
+  '/',
+  '/index.html',
+  '/css/style.css',
+  '/css/components.css',
+  '/js/api.js',
+  '/js/app.js',
+  '/js/planning.js',
+  '/js/paiements.js',
+  '/js/documents.js',
+  '/js/stats.js',
+  '/js/comparaison.js',
+  '/js/logs.js',
+  '/js/etablissements.js',
+  '/js/print.js',
+  '/js/impots.js',
+  '/manifest.json',
+  '/icons/icon-192.png',
+  '/icons/icon-512.png'
+];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
@@ -13,14 +32,27 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   if (e.request.url.includes('/api/')) {
-    // Network-first for API
-    e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+    // Network-first for API calls
+    e.respondWith(
+      fetch(e.request)
+        .then(resp => {
+          const clone = resp.clone();
+          caches.open(CACHE).then(c => c.put(e.request, clone));
+          return resp;
+        })
+        .catch(() => caches.match(e.request))
+    );
   } else {
-    // Cache-first for static
-    e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).then(resp => {
-      const clone = resp.clone();
-      caches.open(CACHE).then(c => c.put(e.request, clone));
-      return resp;
-    })));
+    // Cache-first for static files
+    e.respondWith(
+      caches.match(e.request).then(r => {
+        if (r) return r;
+        return fetch(e.request).then(resp => {
+          const clone = resp.clone();
+          caches.open(CACHE).then(c => c.put(e.request, clone));
+          return resp;
+        });
+      })
+    );
   }
 });
