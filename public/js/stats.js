@@ -115,7 +115,7 @@ const Stats = {
     const heuresParEtab = {};
     const kmParEtab = {};
     workMissions.forEach(m => {
-      const etab = m.etablissement || 'Inconnu';
+      const etab = (m.etablissement || 'Inconnu').trim();
       heuresParEtab[etab] = (heuresParEtab[etab] || 0) + (m.heuresTravaillees || 0);
       kmParEtab[etab] = (kmParEtab[etab] || 0) + (m.km || 0);
     });
